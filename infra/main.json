@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.6.18.56646",
-      "templateHash": "1187121940835432611"
+      "templateHash": "762371414501317656"
     }
   },
   "parameters": {
@@ -225,7 +225,7 @@
         false
       ],
       "metadata": {
-        "description": "true の場合Azureからの接続をすべて許可します。Synapse,SQLDBに対して影響します。"
+        "description": "true の場合Azureからの接続をすべて許可します。Synapse,SQLDBで共通"
       }
     },
     "sqlAdministratorUsername": {
@@ -257,7 +257,7 @@
       "type": "string",
       "defaultValue": "Japanese_XJIS_100_CI_AS",
       "metadata": {
-        "description": "データベースの照合順序。既定：日本語環境での推奨値　SQL DBと共通"
+        "description": "データベースの照合順序。既定：日本語環境での推奨値　Synapse,SQLDBで共通"
       }
     },
     "sqlPoolBackupType": {

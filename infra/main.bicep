@@ -124,7 +124,7 @@ param isNeedSynapse bool= true
   false
 ])
 param isDLPEnable bool = false
-@description('true の場合Azureからの接続をすべて許可します。Synapse,SQLDBに対して影響します。')
+@description('true の場合Azureからの接続をすべて許可します。Synapse,SQLDBで共通')
 @allowed([
   true
   false
@@ -144,7 +144,7 @@ param sqlAdministratorPassword string=''
   false
 ])
 param isNeedSqlPool bool= false
-@description('データベースの照合順序。既定：日本語環境での推奨値　SQL DBと共通')
+@description('データベースの照合順序。既定：日本語環境での推奨値　Synapse,SQLDBで共通')
 param collation string = 'Japanese_XJIS_100_CI_AS'
 @allowed([
   'LRS'
