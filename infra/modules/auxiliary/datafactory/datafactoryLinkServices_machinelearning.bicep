@@ -6,7 +6,7 @@ param env string
 var mlStorageName  =  last(split(mlStorageId,'/'))
 var mlWorkspaceName =  last(split(machinelearningId,'/'))
 
-var mlStorageNameCleaned = replace(replace(mlStorageName,'-${env}','_env'),'-','_')
+var mlStorageNameCleaned = replace(replace(mlStorageName,'mlst${env}','mlstenv'),'-','_')
 var mlWorkspaceNameCleaned = replace(replace(mlWorkspaceName,'-${env}','_env'),'-','_')
 
 

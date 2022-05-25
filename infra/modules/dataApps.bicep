@@ -44,7 +44,8 @@ param keyVaultId string
 // synapse
 param isNeedSynapse bool
 var synapseName = '${prefix}-syn-${env}'
-var synapseStorageName = '${prefix}-ws-${env}'
+
+param workStorageAccountId string
 param sqlAdministratorUsername string
 @secure()
 param sqlAdministratorPassword string
@@ -133,14 +134,7 @@ module synapse 'services/synapse.bicep' = if (isNeedSynapse == true) {
   params: {
     location: location
     tags:tagJoin
-    // storage
-    synapseDefaultStorageAccountName: synapseStorageName
-    allowSubnetIds: [
-      mlcomputeSubnetId
-      customPublicSubnetId
-      runtimeSubnetId
-    ]   
-    WhiteListsCIDRRules: WhiteListsCIDRRules
+    synapseDefaultStorageAccountId:workStorageAccountId
     // workspace
     synapseName: synapseName
     AllowAzure:AllowAzure
@@ -227,8 +221,6 @@ output datafactoryId string = (isNeedDataFactory == true) ? datafactory.outputs.
 output datafactoryPrincipalId string = (isNeedDataFactory == true) ? datafactory.outputs.datafactoryPrincipalId : ''
 output synapseId string = (isNeedSynapse == true) ? synapse.outputs.synapseId : ''
 output synapsePrincipalId string =  (isNeedSynapse == true) ? synapse.outputs.synapsePrincipalId : ''
-output synapseStorageId string =  (isNeedSynapse == true) ? synapse.outputs.synapseStorageId : ''
-output synapseFilesystemId string =  (isNeedSynapse == true) ? synapse.outputs.synapseFilesystemId : ''
 output sparkPoolId string =  (isNeedSynapse == true) ?  synapse.outputs.sparkPoolId : ''
 output machinelearningId string =  (isNeedMachineLearning == true) ? machinelearning.outputs.machinelearningWorkspaceId : ''
 output containerRegistryId string = (isNeedMachineLearning == true) ? machinelearning.outputs.containerRegistryId : ''

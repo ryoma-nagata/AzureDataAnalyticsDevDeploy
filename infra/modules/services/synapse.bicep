@@ -3,19 +3,11 @@ param location string
 param tags object
 
 // synapseDefaultStorage
-param synapseDefaultStorageAccountName string
-param WhiteListsCIDRRules array
-param allowSubnetIds array
-var allowSubnetIdsRules = [for allowSubnetId in allowSubnetIds:{
-  id:allowSubnetId
-  action:'Allow'
-} ]
-var ResourceAccessrules = [
-  {
-    tenantId: subscription().tenantId
-    resourceId: '/subscriptions/${subscription().subscriptionId}/resourceGroups/*/providers/Microsoft.Synapse/workspaces/*'
-  }
-] 
+param synapseDefaultStorageAccountId string
+var synapseDefaultStorageAccountName = last(split(synapseDefaultStorageAccountId,'/'))
+
+
+
 // synapse
 param synapseName string
 param administratorUsername string = 'sqladmin'
@@ -64,23 +56,17 @@ param shirVMName string
 
 // param purviewId string =''
 
-
-module synapseDefaultStorage 'storage.bicep' = {
-  name: synapseDefaultStorageAccountName
-  params: {
-    tags:tags
-    fileSystemNames: [
-      'work-${synapseName}'
-    ]
-    isHnsEnabled: true
-    location: location
-    storageIPWhiteLists: WhiteListsCIDRRules
-    virtualNetworkRules: allowSubnetIdsRules
-    storageName: synapseDefaultStorageAccountName
-    storageSKU: 'Standard_ZRS'
-    resourceAccessRules:ResourceAccessrules
-  }
-}
+// resource synapseDefaultStorageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' existing = {
+//   name: last(split(synapseDefaultStorageAccountId,'/'))
+// }
+// resource synapseDefaultStorageAccountBlob 'Microsoft.Storage/storageAccounts/blobServices@2021-09-01' = {
+//   name: 'default'
+//   parent: synapseDefaultStorageAccount
+// }
+// resource synapseDefaultStorageFilesystem 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-09-01' = {
+//   name: 'work-${synapseName}'
+//   parent:synapseDefaultStorageAccountBlob
+// }
 
 resource synapseWorkspace 'Microsoft.Synapse/workspaces@2021-06-01' = {
   name:synapseName
@@ -91,7 +77,7 @@ resource synapseWorkspace 'Microsoft.Synapse/workspaces@2021-06-01' = {
   tags:tags
   properties:{
     defaultDataLakeStorage:{
-      filesystem:last(split(synapseDefaultStorage.outputs.storageFileSystemIds[0].storageFileSystemId,'/'))
+      filesystem:'synapse001'
       accountUrl: 'https://${synapseDefaultStorageAccountName}.dfs.${environment().suffixes.storage}'
     }
     sqlAdministratorLogin: administratorUsername
@@ -187,7 +173,7 @@ resource shir 'Microsoft.Synapse/workspaces/integrationRuntimes@2021-06-01' = if
 
 
 module runtime 'runtime.bicep'  = if(isNeedSHIRforSynepse == true)  {
-  name: 'runtime'
+  name: 'runtimeForSynapse'
   params: {
     adminPassword: VMAdministratorLoginPassword
     adminUsername: VMAdministratorLogin
@@ -210,7 +196,5 @@ module runtime 'runtime.bicep'  = if(isNeedSHIRforSynepse == true)  {
 
 output synapseId string = synapseWorkspace.id
 output sparkPoolId string = synapseBigDataPool001.id
-output synapseStorageId string = synapseDefaultStorage.outputs.storageId
 output synapsePrincipalId string = synapseWorkspace.identity.principalId
-output synapseFilesystemId string = synapseDefaultStorage.outputs.storageFileSystemIds[0].storageFileSystemId
 // output sparkDef object = sparkdef

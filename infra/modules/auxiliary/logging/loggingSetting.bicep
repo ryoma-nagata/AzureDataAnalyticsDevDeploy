@@ -7,7 +7,7 @@ param enrichCurateStorageId string
 
 param databricksId string
 param datafactoryId string
-param synapseStorageId string
+param workStorageId string
 param synapseId string
 param sparkpoolId string 
 
@@ -116,17 +116,42 @@ resource keyvaultAudit 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview
 }
 
 
-module  loggingSetting_synapse 'loggingSetting_synapse.bicep'  = if (!empty(synapseStorageId )){
-  name: 'loggingSetting_synapse'
-  params:{
-    synapseStorageId: synapseStorageId
-    vulnerbilityContainerPath: vulnerbilityContainerPath
-    loganalyticsId: loganalyticsId
-    sparkpoolId: sparkpoolId
-    loggingStorageId: loggingStorageId
-    synapseId: synapseId
+
+//  workStorage
+resource synapseStorage 'Microsoft.Storage/storageAccounts@2021-09-01' existing = {
+  name: last(split(workStorageId,'/'))
+}
+
+resource synapseStorageblob 'Microsoft.Storage/storageAccounts/blobServices@2021-09-01' ={
+  parent:synapseStorage
+  name: 'default'
+}
+resource synapseStoragebloballLogs 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  scope:synapseStorageblob
+  name: 'allLogs'
+  properties:{
+    storageAccountId:loggingStorageId
+    workspaceId:loganalyticsId
+    logs:[
+      {
+        categoryGroup:'allLogs'
+        enabled: true
+      }
+    ]
   }
 }
+
+module loggingSetting_synapse 'loggingSetting_synapse.bicep' = if (!empty(synapseId ))  {
+  name: 'loggingSetting_synapse'
+  params: {
+    loganalyticsId: loganalyticsId
+    loggingStorageId: loggingStorageId
+    sparkpoolId:sparkpoolId 
+    synapseId: synapseId
+    vulnerbilityContainerPath:vulnerbilityContainerPath 
+  }
+}
+
 
 module  loggingSetting_sql 'loggingSetting_sql.bicep'  = if (!empty(sqlServerId )){
   name: 'loggingSetting_sql'

@@ -8,15 +8,15 @@ var keyvaultNameCleaned = replace(replace(keyvaultName,'-${env}','_env'),'-','_'
 
 param uploadStraogeId string
 var uploadStraogeName = last(split(uploadStraogeId,'/'))
-var uploadStraogeNameCleaned = replace(replace(uploadStraogeName,'-${env}','_env'),'-','_')
+var uploadStraogeNameCleaned = replace(replace(uploadStraogeName,'upst${env}','upstenv'),'-','_')
 
 param rawLakeId string
 var  rawLakeName = last(split(rawLakeId,'/'))
-var  rawLakeCleaned = replace(replace(rawLakeName,'-${env}','_env'),'-','_')
+var  rawLakeCleaned = replace(replace(rawLakeName,'raw${env}','rawenv'),'-','_')
 
 param enCurLakeId string
 var  enCurLakeName = last(split(enCurLakeId,'/'))
-var  enCurLakeNameCleaned = replace(replace(enCurLakeName,'-${env}','_env'),'-','_')
+var  enCurLakeNameCleaned = replace(replace(enCurLakeName,'encur${env}','encurenv'),'-','_')
 
 param databricksId string
 param databricksWorkspaceUrl string

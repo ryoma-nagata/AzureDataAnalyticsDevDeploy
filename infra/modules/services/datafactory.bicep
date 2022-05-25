@@ -62,7 +62,7 @@ resource shir 'Microsoft.DataFactory/factories/integrationRuntimes@2018-06-01' =
 
 
 module runtime 'runtime.bicep'  = if(isNeedSHIRforDataFactory == true)  {
-  name: 'runtime'
+  name: 'runtimeForDataFactory'
   params: {
     adminPassword: VMAdministratorLoginPassword
     adminUsername: VMAdministratorLogin

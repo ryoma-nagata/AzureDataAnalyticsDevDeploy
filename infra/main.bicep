@@ -244,6 +244,7 @@ module datalake 'modules/datalakes.bicep' = {
     prefix: prefix
     tags: tags
     WhiteListsCIDRRules: WhiteListsCIDRRules
+    isNeedSynapse:isNeedSynapse
   }
 }
 module uploads 'modules/uploadStorage.bicep' = {
@@ -304,6 +305,7 @@ module dataApps 'modules/dataApps.bicep' = {
   
     // synapse
     isNeedSynapse:isNeedSynapse
+    workStorageAccountId:datalake.outputs.workLakeId
     WhiteListsStartEndIPs:WhiteListsStartEndIPs
     AllowAzure:AllowAzure
     sqlAdministratorPassword:sqlAdministratorPassword
@@ -340,6 +342,7 @@ module datalakesRBAC 'modules/auxiliary/rbac/datalakesRoleAssignment.bicep' = {
   params: {
     datafacoryPrincipalId: dataApps.outputs.datafactoryPrincipalId
     enrichCurateStorageId: datalake.outputs.enCurLakeId
+    workspaceLakeId:datalake.outputs.workLakeId
     landingRawStorageId: datalake.outputs.landingRawLakeId
     machinelearningPrincipalId: dataApps.outputs.machinelearningPrincipalId
     synapsePrincipalId: dataApps.outputs.synapsePrincipalId
@@ -369,6 +372,7 @@ module machinelearningRBAC 'modules/auxiliary/rbac/machinelearningRoleAssignment
     datafacoryPrincipalId: dataApps.outputs.datafactoryPrincipalId
     machinelearningId: dataApps.outputs.machinelearningId
     synapsePrincipalId:  dataApps.outputs.synapsePrincipalId
+    mlStorageId:dataApps.outputs.mlstorageId
   }
 }
 
@@ -381,14 +385,14 @@ module uploadStorageRBAC 'modules/auxiliary/rbac/uploadStorageRoleAssignment.bic
   }
 }
 
-module workspaceLakeRBAC 'modules/auxiliary/rbac/workspaceLakeRoleAssignment.bicep' =  if (isNeedSynapse == true){
-  name: 'workspaceLakeRBAC'
-  params: {
-    synapsePrincipalId: dataApps.outputs.synapsePrincipalId
-    workspaceLakeFilesystemId: dataApps.outputs.synapseFilesystemId
-    workspaceLakeId:dataApps.outputs.synapseStorageId
-  }
-}
+// module workspaceLakeRBAC 'modules/auxiliary/rbac/workspaceLakeRoleAssignment.bicep' =  if (isNeedSynapse == true){
+//   name: 'workspaceLakeRBAC'
+//   params: {
+//     synapsePrincipalId: dataApps.outputs.synapsePrincipalId
+//     workspaceLakeFilesystemId: dataApps.outputs.synapseFilesystemId
+//     workspaceLakeId:datalake.outputs.workLakeId
+//   }
+// }
 
 module resouceGroupRBAC 'modules/auxiliary/rbac/resourceGroupRoleAssignment.bicep' = {
   name: 'resouceGroupRBAC'
@@ -417,7 +421,7 @@ module loggingsetting 'modules/auxiliary/logging/loggingSetting.bicep' = {
     sqldatabaseId: dataApps.outputs.sqlDatabaseId
     sqlServerId: dataApps.outputs.sqlServerId
     synapseId: dataApps.outputs.synapseId
-    synapseStorageId: dataApps.outputs.synapseStorageId
+    workStorageId:datalake.outputs.workLakeId
     uploadStorageId: uploads.outputs.uploadStorageId
     vulnerbilityContainerPath:logging.outputs.vulnerabilityscansConteinrNamePath
     // cognitiveservicesId:dataApps.outputs.CognitiveServicesAccountId
@@ -449,5 +453,14 @@ module datafactoryLinkServices 'modules/auxiliary/datafactory/datafactoryLinkSer
     sqlDatabaseId: dataApps.outputs.sqlDatabaseId
     sqlserverId: dataApps.outputs.sqlServerId
     uploadStraogeId: uploads.outputs.uploadStorageId
+  }
+}
+
+module machinelearningSetup 'modules/auxiliary/machinelearning/machinelearningSetup.bicep' = if(isNeedMachineLearning == true) {
+  name: 'machinelearningSetup'
+  params: {
+    machineLearningId: dataApps.outputs.machinelearningId
+    tags:tags
+    datalakeFileSystemIds:concat(datalake.outputs.enCurLakeFileSystemIds,datalake.outputs.workLakeFileSystemIds)
   }
 }

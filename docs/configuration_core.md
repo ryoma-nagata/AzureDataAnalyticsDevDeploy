@@ -106,6 +106,41 @@
     - Data Factory
     - Azure ML
 
+### workSynapse 用ストレージ
+
+名称：{prefix}ws{env}
+種類：ストレージアカウント
+
+各設定
+- 名前付き階層空間:有効
+- コンテナ
+  - 00-work-sandbox:手動アップなど分析サンドボックスとして使用することを想定
+  - (Synapseリソース名)：Synapseのプライマリストレージとして試行錯誤をすることを想定
+- ネットワーク
+  - 選択した仮想ネットワークと IP アドレスから有効
+    - Databricks用サブネット
+    - セルフホステッド統合ランタイム用サブネット
+    - Azure ML Compute用サブネット
+    - パラメータで設定したIP
+  - リソースインスタンス
+    - 同サブスクリプションのSynapse Analytics
+    - 同サブスクリプションのAzure ML
+  - 信頼されたAzureアクセス：許可
+- ライフサイクル管理
+  - 90日間変更なしでCoolへ
+- 構成
+  - Blobパブリックアクセス：無効
+  - ストレージアカウントキーによるアクセス：有効
+  - 既定のアクセス層 : hot
+  - レプリケーション：ZRS（データレイク利用時の推奨値）
+- 診断設定：すべてのログ(blobサービス)
+  - LogAnalytics
+  - Logging Blob storage
+- RBAC
+  - ストレージBlobデータ共同作成者
+    - Synapse Workspace
+    - Data Factory
+    - Azure ML
 
 ## Network
 

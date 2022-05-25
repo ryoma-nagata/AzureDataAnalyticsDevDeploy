@@ -2,7 +2,6 @@ param loggingStorageId string
 var loggingStorageName = last(split(loggingStorageId,'/'))
 param loganalyticsId string
 
-param synapseStorageId string
 param synapseId string
 param sparkpoolId string 
 
@@ -11,29 +10,6 @@ param sparkpoolId string
 param vulnerbilityContainerPath string
 
 
-//  synapseStorage
-resource synapseStorage 'Microsoft.Storage/storageAccounts@2021-09-01' existing = if (!empty(synapseStorageId )){
-  name: last(split(synapseStorageId,'/'))
-}
-
-resource synapseStorageblob 'Microsoft.Storage/storageAccounts/blobServices@2021-09-01' =if (!empty(synapseStorageId )){
-  parent:synapseStorage
-  name: 'default'
-}
-resource synapseStoragebloballLogs 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (!empty(synapseStorageId )){
-  scope:synapseStorageblob
-  name: 'allLogs'
-  properties:{
-    storageAccountId:loggingStorageId
-    workspaceId:loganalyticsId
-    logs:[
-      {
-        categoryGroup:'allLogs'
-        enabled: true
-      }
-    ]
-  }
-}
 // synapse
 resource synapse 'Microsoft.Synapse/workspaces@2021-06-01' existing = if (!empty(synapseId )){
   name:  last(split(synapseId,'/'))
