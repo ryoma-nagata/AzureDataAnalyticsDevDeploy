@@ -164,7 +164,7 @@ param sqlPooldwu string = 'dw100c'
 
 
 // SHIR
-@description('true の場合をSynapse用セルフホステッド統合ランタイムをデプロイします。isNeedSynapseをFalseにした場合は無効です。')
+@description('true の場合Synapse用セルフホステッド統合ランタイムをデプロイします。isNeedSynapseをFalseにした場合は無効です。')
 @allowed([
   true
   false
@@ -172,7 +172,7 @@ param sqlPooldwu string = 'dw100c'
 param isNeedSHIRforSynepse bool = true
 
 // SQL DB
-@description('true の場合をSQLDBをデプロイします。')
+@description('true の場合SQLDBをデプロイします。')
 @allowed([
   true
   false

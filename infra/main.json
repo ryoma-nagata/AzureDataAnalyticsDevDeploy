@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.6.18.56646",
-      "templateHash": "112086835974450616"
+      "templateHash": "1187121940835432611"
     }
   },
   "parameters": {
@@ -293,7 +293,7 @@
         false
       ],
       "metadata": {
-        "description": "true の場合をSynapse用セルフホステッド統合ランタイムをデプロイします。isNeedSynapseをFalseにした場合は無効です。"
+        "description": "true の場合Synapse用セルフホステッド統合ランタイムをデプロイします。isNeedSynapseをFalseにした場合は無効です。"
       }
     },
     "isNeedSQL": {
@@ -304,7 +304,7 @@
         false
       ],
       "metadata": {
-        "description": "true の場合をSQLDBをデプロイします。"
+        "description": "true の場合SQLDBをデプロイします。"
       }
     },
     "isNeedVMforOnPremiseDataGateway": {
