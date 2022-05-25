@@ -1,0 +1,4 @@
+### Logging blob
+
+Storage Account
+-　

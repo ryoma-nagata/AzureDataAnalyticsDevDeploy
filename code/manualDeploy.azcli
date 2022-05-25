@@ -1,5 +1,5 @@
-$targetRG=''
-$subscriptionId=''
+targetRG='BAP-ZEALWorkshop-RG-01-Prd'
+subscriptionId='a1d6eb75-4814-4275-8647-9addeb8fe6e3'
 
 az login
 
