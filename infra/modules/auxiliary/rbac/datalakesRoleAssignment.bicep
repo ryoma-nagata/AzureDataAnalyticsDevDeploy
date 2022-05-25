@@ -5,7 +5,7 @@ param enrichCurateStorageId string
 
 param datafacoryPrincipalId string
 param synapsePrincipalId string
-param machinelearningId string
+param machinelearningPrincipalId string
 
 var storageBlobDataContributorRoleId = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
 
@@ -58,12 +58,12 @@ resource synapseToenrichCurateLake 'Microsoft.Authorization/roleAssignments@2020
 }
 
 
-resource machinelearningToenrichCurateLake 'Microsoft.Authorization/roleAssignments@2020-04-01-preview'  =if (!empty(machinelearningId)) {
-  name: guid(machinelearningId,enrichCurateStorageId,storageBlobDataContributorRoleId,'machinelearningToenrichCurateLake')
+resource machinelearningToenrichCurateLake 'Microsoft.Authorization/roleAssignments@2020-04-01-preview'  =if (!empty(machinelearningPrincipalId)) {
+  name: guid(machinelearningPrincipalId,enrichCurateStorageId,storageBlobDataContributorRoleId,'machinelearningToenrichCurateLake')
   scope: enrichCurateLake
   properties: {
     roleDefinitionId:resourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataContributorRoleId)
-    principalId: machinelearningId
+    principalId: machinelearningPrincipalId
     principalType: 'ServicePrincipal'
   }
 }

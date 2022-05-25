@@ -78,7 +78,7 @@ module runtime 'runtime.bicep'  = if(isNeedSHIRforDataFactory == true)  {
     publicIPAllocationMethod:'Dynamic'
     publicIpSku:'Basic'
     OSVersion:'2019-Datacenter'
-    datafactoryIntegrationRuntimeAuthKey: listAuthKeys(shir.id,shir.apiVersion).authKey1
+    datafactoryIntegrationRuntimeAuthKey:(isNeedSHIRforDataFactory == true) ? listAuthKeys(shir.id,shir.apiVersion).authKey1 : ''
   }
 }
 

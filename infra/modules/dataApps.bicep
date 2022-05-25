@@ -115,6 +115,7 @@ module machinelearning 'services/machinelearning.bicep' =  if (isNeedMachineLear
     WorkspaceName: machinelearningName
     amlStorageName: amlStorageName
     mlcomputeSubnetId: mlcomputeSubnetId
+    databricksSubnetId:customPublicSubnetId
     storageIPWhiteLists: WhiteListsCIDRRules
     applicationinsightName: applicationinsightName
     containerRegistryName: containerRegistryName
@@ -214,5 +215,7 @@ output machinelearningId string =  (isNeedMachineLearning == true) ? machinelear
 output containerRegistryId string = (isNeedMachineLearning == true) ? machinelearning.outputs.containerRegistryId : ''
 output mlstorageId string =(isNeedMachineLearning == true) ? machinelearning.outputs.mlstorageId : ''
 output sqlServerId string = (isNeedSQL == true)? sql.outputs.sqlServerId : ''
+output sqlServerPrincipalId string =  (isNeedSQL == true)? sql.outputs.sqlServerPrincipalId : ''
 output sqlDatabaseId string = (isNeedSQL == true)? sql.outputs.sqlDatabaseId : ''
 
+output machinelearningPrincipalId string = (isNeedSQL == true)? machinelearning.outputs.machinelearningPrincipalId : ''

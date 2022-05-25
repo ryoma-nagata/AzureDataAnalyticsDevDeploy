@@ -118,13 +118,13 @@ param isNeedMachineLearning bool= true
   false
 ])
 param isNeedSynapse bool= true
-@description('true の場合データ流出保護を有効にします※一部機能に制限がかかります。')
+@description('true の場合Syanpse workspaceのデータ流出保護を有効にします※一部機能に制限がかかります。')
 @allowed([
   true
   false
 ])
 param isDLPEnable bool = false
-@description('true の場合Azureからの接続をすべて許可します。')
+@description('true の場合Azureからの接続をすべて許可します。Synapse,SQLDBに対して影響します。')
 @allowed([
   true
   false
@@ -292,6 +292,7 @@ module dataApps 'modules/dataApps.bicep' = {
     keyVaultId:appKeyvault.outputs.keyvaultId
     mlcomputeSubnetId:network.outputs.mlcomputesSubnetId
     WhiteListsCIDRRules:WhiteListsCIDRRules
+  
     // synapse
     isNeedSynapse:isNeedSynapse
     WhiteListsStartEndIPs:WhiteListsStartEndIPs
@@ -329,7 +330,7 @@ module datalakesRBAC 'modules/auxiliary/rbac/datalakesRoleAssignment.bicep' = {
     datafacoryPrincipalId: dataApps.outputs.datafactoryPrincipalId
     enrichCurateStorageId: datalake.outputs.enCurLakeId
     landingRawStorageId: datalake.outputs.landingRawLakeId
-    machinelearningId: dataApps.outputs.machinelearningId
+    machinelearningPrincipalId: dataApps.outputs.machinelearningPrincipalId
     synapsePrincipalId: dataApps.outputs.synapsePrincipalId
   }
 }
@@ -346,8 +347,8 @@ module loggingRBAC 'modules/auxiliary/rbac/loggingStorageRoleAssignment.bicep' =
   name: 'loggingRBAC'
   params: {
     loggingStorageId: logging.outputs.LoggingStorageId
-    sqlserverPrincipalId: dataApps.outputs.sqlServerId
-    synapsePrincipalId: dataApps.outputs.synapseId
+    sqlserverPrincipalId: dataApps.outputs.sqlServerPrincipalId
+    synapsePrincipalId: dataApps.outputs.synapsePrincipalId
   }
 }
 
@@ -356,7 +357,7 @@ module machinelearningRBAC 'modules/auxiliary/rbac/machinelearningRoleAssignment
   params: {
     datafacoryPrincipalId: dataApps.outputs.datafactoryPrincipalId
     machinelearningId: dataApps.outputs.machinelearningId
-    synapsePrincipalId:  dataApps.outputs.synapseId
+    synapsePrincipalId:  dataApps.outputs.synapsePrincipalId
   }
 }
 
@@ -364,7 +365,7 @@ module uploadStorageRBAC 'modules/auxiliary/rbac/uploadStorageRoleAssignment.bic
   name: 'uploadStorageRBAC'
   params: {
     datafacoryPrincipalId: dataApps.outputs.datafactoryPrincipalId
-    synapsePrincipalId:  dataApps.outputs.synapseId
+    synapsePrincipalId:  dataApps.outputs.synapsePrincipalId
     uploadStorageId: uploads.outputs.uploadStorageId
   }
 }
@@ -374,6 +375,7 @@ module workspaceLakeRBAC 'modules/auxiliary/rbac/workspaceLakeRoleAssignment.bic
   params: {
     synapsePrincipalId: dataApps.outputs.synapsePrincipalId
     workspaceLakeFilesystemId: dataApps.outputs.synapseFilesystemId
+    workspaceLakeId:dataApps.outputs.synapseStorageId
   }
 }
 
@@ -394,6 +396,7 @@ module loggingsetting 'modules/auxiliary/logging/loggingSetting.bicep' = {
     loggingStorageId: logging.outputs.LoggingStorageId
     machinelearningId: dataApps.outputs.machinelearningId
     mlStorageId: dataApps.outputs.mlstorageId
+    mlAcrId:dataApps.outputs.containerRegistryId
     sparkpoolId: dataApps.outputs.sparkPoolId
     sqldatabaseId: dataApps.outputs.sqlDatabaseId
     sqlServerId: dataApps.outputs.sqlServerId

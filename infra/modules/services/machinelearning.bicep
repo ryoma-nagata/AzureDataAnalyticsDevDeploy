@@ -7,6 +7,8 @@ param keyVaultId string
 param amlStorageName string
 param storageIPWhiteLists array
 param mlcomputeSubnetId string
+param databricksSubnetId string
+
 var resourceAccessRules = [
   {
     tenantId: subscription().tenantId
@@ -33,6 +35,10 @@ module amlStorage 'storage.bicep' = {
     virtualNetworkRules: [
       {
         id: mlcomputeSubnetId
+        action: 'Allow'
+      }
+      {
+        id: databricksSubnetId
         action: 'Allow'
       }
     ]
@@ -76,3 +82,4 @@ resource machinelearning 'Microsoft.MachineLearningServices/workspaces@2022-01-0
 output machinelearningWorkspaceId string = machinelearning.id
 output containerRegistryId string = amlContainerRegistry.outputs.containerRegistryId
 output mlstorageId string = amlStorage.outputs.storageId
+output machinelearningPrincipalId string = machinelearning.identity.principalId

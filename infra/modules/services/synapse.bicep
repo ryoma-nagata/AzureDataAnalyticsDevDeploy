@@ -132,28 +132,19 @@ resource synapseAadAdministrators 'Microsoft.Synapse/workspaces/administrators@2
 }
 
 
-resource sqlpool 'Microsoft.Synapse/workspaces/sqlPools@2021-06-01'= if (isNeedSqlPool==true) {
-  parent: synapseWorkspace
-  name: sqlPoolNameCleaned
-  location:location
-  tags:tags
-  sku:{
-    name: sqlPooldwu
-  }
-  properties:{
-    collation:collation
-    storageAccountType:sqlPoolBackupType
-    
+module sqlpool '../auxiliary/sqlpool.bicep' = if (isNeedSqlPool==true) {
+  name: 'sqlpool'
+  params:{
+    location: location
+    tags: tags
+    sqlPooldwu: sqlPooldwu
+    collation: collation
+    sqlPoolBackupType: sqlPoolBackupType
+    sqlPoolName: sqlPoolNameCleaned
+    synapseId: synapseWorkspace.id
   }
 }
 
-resource tde 'Microsoft.Synapse/workspaces/sqlPools/transparentDataEncryption@2021-06-01' = {
-  name: 'current'
-  parent:sqlpool
-  properties:{
-    status:'Enabled'
-  } 
-}
 
 
 resource synapseBigDataPool001 'Microsoft.Synapse/workspaces/bigDataPools@2021-06-01' = {  
@@ -174,7 +165,7 @@ resource synapseBigDataPool001 'Microsoft.Synapse/workspaces/bigDataPools@2021-0
     nodeSize: 'Small'
     nodeSizeFamily: 'MemoryOptimized'
     sessionLevelPackagesEnabled: true
-    sparkVersion: '3.1'
+    sparkVersion: '3.2'
     dynamicExecutorAllocation:{
       enabled:true
       maxExecutors:4
@@ -212,7 +203,7 @@ module runtime 'runtime.bicep'  = if(isNeedSHIRforSynepse == true)  {
     publicIPAllocationMethod:'Dynamic'
     publicIpSku:'Basic'
     OSVersion:'2019-Datacenter'
-    datafactoryIntegrationRuntimeAuthKey: listAuthKeys(shir.id,shir.apiVersion).authKey1
+    datafactoryIntegrationRuntimeAuthKey: (isNeedSHIRforSynepse == true) ? listAuthKeys(shir.id,shir.apiVersion).authKey1 : ''
   }
 }
 
