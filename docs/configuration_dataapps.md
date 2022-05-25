@@ -36,6 +36,14 @@
 - 統合ランタイム
   - Azure：マネージド仮想ネットワーク
   - セルフホステッド統合ランタイム：
+- リンクサービス
+  - Upload Blob storage
+  - Landing/Raw Lake
+  - Enrich/Curate Lake
+  - Databricks
+  - Machine Learning
+  - SQL Database
+  - Key Vault
 
 
 #### Datafactoryセルフホステッド統合ランタイム用VM
@@ -165,6 +173,7 @@
 
 - マネージド仮想ネットワーク：有効
 - データ流出保護：パラメータにて制御
+- Azure Active Directory:パラメータ内のセキュリティグループを適用
 - AzureSQL監査：有効
 - ネットワークアクセス
   - ワークスペースのエンドポイントへのパブリック ネットワーク アクセス:有効
@@ -214,8 +223,7 @@
 各設定：
 - スペック：Standard_A4_v2
 
-
-## SQL DB
+## SQL
 
 ### SQL Server
 
@@ -224,6 +232,7 @@
 
 各設定
 
+- Azure Active Directory:パラメータ内のセキュリティグループを適用
 - パブリック ネットワーク アクセス
   - パブリック ネットワーク アクセス:選択したネットワーク
   - 仮想ネットワーク
@@ -258,3 +267,4 @@
 - 診断設定：すべてのログ
   - LogAnalytics
   - Logging Blob storage 
+
