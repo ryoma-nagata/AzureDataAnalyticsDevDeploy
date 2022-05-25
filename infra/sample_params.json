@@ -1,0 +1,116 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "location": {
+        "value": "japaneast"
+      },
+      "project": {
+        "value": "datapj"
+      },
+      "env": {
+        "value": "dev"
+      },
+      "deployment_id": {
+        "value": "01"
+      },
+      "AdminGroupName": {
+        "value": "(SecurityGroupName)"
+      },
+      "AdminGroupObjectID": {
+        "value": "(ObjectId)"
+      },
+      "VMAdministratorLogin": {
+        "value": "azureadmin"
+      },
+      "VMAdministratorLoginPassword": {
+        "value": ""
+      },
+      "addressPrefixs": {
+        "value": [
+          "10.4.0.0/14"
+        ]
+      },
+      "runtimeSubnetPrefix": {
+        "value": "10.4.0.0/26"
+      },
+      "privateEndpointSubnetPrefix": {
+        "value": "10.4.0.64/26"
+      },
+      "mlcomputesSubnetPrefix": {
+        "value": "10.4.1.0/24"
+      },
+      "adbPublicSubnetPrefix": {
+        "value": "10.4.2.0/24"
+      },
+      "adbPrivateSubnetPrefix": {
+        "value": "10.4.3.0/24"
+      },
+      "WhiteListsStartEndIPs": {
+        "value": [
+            {
+                "name": "allowsample",
+                "startIpAddress": "*.*.*.*",
+                "endIpAddress": "*.*.*.*"
+            }
+        ]
+      },
+      "WhiteListsCIDRs": {
+        "value": [
+          "*.*.*.*"
+        ]
+      },
+      "isNeedDatabricks": {
+        "value": false
+      },
+      "databricksAppObjectId": {
+        "value": "(ObjectId)"
+      },
+      "isNeedDataFactory": {
+        "value": false
+      },
+      "isNeedSHIRforDataFactory": {
+        "value": false
+      },
+      "isNeedMachineLearning": {
+        "value": true
+      },
+      "isNeedSynapse": {
+        "value": true
+      },
+      "isDLPEnable": {
+        "value": false
+      },
+      "AllowAzure": {
+        "value": true
+      },
+      "sqlAdministratorUsername": {
+        "value": "sqladmin"
+      },
+      "sqlAdministratorPassword": {
+        "value": ""
+      },
+      "isNeedSqlPool": {
+        "value": false
+      },
+      "sqlPoolBackupType": {
+        "value": "LRS"
+      },
+      "sqlPooldwu": {
+        "value": "dw100c"
+      },
+      "isNeedSHIRforSynepse": {
+        "value": false
+      },
+      "isNeedSQL": {
+        "value": false
+      },
+      "isNeedVMforOnPremiseDataGateway": {
+        "value": false
+      }
+      ,
+      "collation": {
+        "value": "Japanese_XJIS_100_CI_AS"
+      }
+    }
+  }
