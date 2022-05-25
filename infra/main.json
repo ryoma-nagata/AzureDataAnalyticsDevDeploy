@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.6.18.56646",
-      "templateHash": "11035042159956151096"
+      "templateHash": "112086835974450616"
     }
   },
   "parameters": {
@@ -1368,6 +1368,9 @@
           },
           "WhiteListsCIDRRules": {
             "value": "[variables('WhiteListsCIDRRules')]"
+          },
+          "isNeedSynapse": {
+            "value": "[parameters('isNeedSynapse')]"
           }
         },
         "template": {
@@ -1377,7 +1380,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.6.18.56646",
-              "templateHash": "5594465238827203913"
+              "templateHash": "18184326776910719535"
             }
           },
           "parameters": {
@@ -1392,6 +1395,9 @@
             },
             "tags": {
               "type": "object"
+            },
+            "isNeedSynapse": {
+              "type": "bool"
             },
             "WhiteListsCIDRRules": {
               "type": "array"
@@ -1414,6 +1420,8 @@
             "tagJoin": "[union(parameters('tags'), createObject('Group', 'datalakes'))]",
             "RawLakeName": "[format('{0}-raw-{1}', parameters('prefix'), parameters('env'))]",
             "EnCurLakeName": "[format('{0}-encur-{1}', parameters('prefix'), parameters('env'))]",
+            "workStorageAccountName": "[format('{0}-ws-{1}', parameters('prefix'), parameters('env'))]",
+            "workfileSystem": "[if(parameters('isNeedSynapse'), createArray('00-work-sandbox', 'synapse001'), createArray('00-work-sandbox'))]",
             "landingRawResourceAccessrules": [
               {
                 "tenantId": "[subscription().tenantId]",
@@ -1425,6 +1433,12 @@
                 "tenantId": "[subscription().tenantId]",
                 "resourceId": "[format('/subscriptions/{0}/resourceGroups/*/providers/Microsoft.MachineLearningServices/workspaces/*', subscription().subscriptionId)]"
               },
+              {
+                "tenantId": "[subscription().tenantId]",
+                "resourceId": "[format('/subscriptions/{0}/resourceGroups/*/providers/Microsoft.Synapse/workspaces/*', subscription().subscriptionId)]"
+              }
+            ],
+            "workResourceAccessrules": [
               {
                 "tenantId": "[subscription().tenantId]",
                 "resourceId": "[format('/subscriptions/{0}/resourceGroups/*/providers/Microsoft.Synapse/workspaces/*', subscription().subscriptionId)]"
@@ -1869,6 +1883,222 @@
                   }
                 }
               }
+            },
+            {
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2020-10-01",
+              "name": "[variables('workStorageAccountName')]",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "tags": {
+                    "value": "[parameters('tags')]"
+                  },
+                  "fileSystemNames": {
+                    "value": "[variables('workfileSystem')]"
+                  },
+                  "isHnsEnabled": {
+                    "value": true
+                  },
+                  "location": {
+                    "value": "[parameters('location')]"
+                  },
+                  "storageIPWhiteLists": {
+                    "value": "[parameters('WhiteListsCIDRRules')]"
+                  },
+                  "virtualNetworkRules": {
+                    "value": "[variables('allowSubnetIdsRules')]"
+                  },
+                  "storageName": {
+                    "value": "[variables('workStorageAccountName')]"
+                  },
+                  "storageSKU": {
+                    "value": "Standard_ZRS"
+                  },
+                  "resourceAccessRules": {
+                    "value": "[variables('workResourceAccessrules')]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.6.18.56646",
+                      "templateHash": "8766346466627536355"
+                    }
+                  },
+                  "parameters": {
+                    "storageName": {
+                      "type": "string"
+                    },
+                    "fileSystemNames": {
+                      "type": "array"
+                    },
+                    "storageIPWhiteLists": {
+                      "type": "array"
+                    },
+                    "location": {
+                      "type": "string"
+                    },
+                    "isHnsEnabled": {
+                      "type": "bool"
+                    },
+                    "storageSKU": {
+                      "type": "string"
+                    },
+                    "virtualNetworkRules": {
+                      "type": "array"
+                    },
+                    "tags": {
+                      "type": "object"
+                    },
+                    "defaultAccessTier": {
+                      "type": "string",
+                      "defaultValue": "Hot"
+                    },
+                    "resourceAccessRules": {
+                      "type": "array"
+                    }
+                  },
+                  "variables": {
+                    "storageNameCleaned": "[replace(parameters('storageName'), '-', '')]"
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.Storage/storageAccounts",
+                      "apiVersion": "2021-02-01",
+                      "name": "[variables('storageNameCleaned')]",
+                      "location": "[parameters('location')]",
+                      "tags": "[parameters('tags')]",
+                      "identity": {
+                        "type": "SystemAssigned"
+                      },
+                      "sku": {
+                        "name": "[parameters('storageSKU')]"
+                      },
+                      "kind": "StorageV2",
+                      "properties": {
+                        "accessTier": "[parameters('defaultAccessTier')]",
+                        "allowBlobPublicAccess": false,
+                        "allowSharedKeyAccess": true,
+                        "encryption": {
+                          "keySource": "Microsoft.Storage",
+                          "services": {
+                            "blob": {
+                              "enabled": true,
+                              "keyType": "Account"
+                            },
+                            "file": {
+                              "enabled": true,
+                              "keyType": "Account"
+                            },
+                            "queue": {
+                              "enabled": true,
+                              "keyType": "Service"
+                            },
+                            "table": {
+                              "enabled": true,
+                              "keyType": "Service"
+                            }
+                          }
+                        },
+                        "isHnsEnabled": "[parameters('isHnsEnabled')]",
+                        "networkAcls": {
+                          "bypass": "AzureServices",
+                          "defaultAction": "Deny",
+                          "ipRules": "[parameters('storageIPWhiteLists')]",
+                          "virtualNetworkRules": "[parameters('virtualNetworkRules')]",
+                          "resourceAccessRules": "[parameters('resourceAccessRules')]"
+                        },
+                        "supportsHttpsTrafficOnly": true
+                      }
+                    },
+                    {
+                      "type": "Microsoft.Storage/storageAccounts/blobServices",
+                      "apiVersion": "2021-02-01",
+                      "name": "[format('{0}/{1}', variables('storageNameCleaned'), 'default')]",
+                      "properties": {},
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]"
+                      ]
+                    },
+                    {
+                      "copy": {
+                        "name": "storageFileSystems",
+                        "count": "[length(parameters('fileSystemNames'))]"
+                      },
+                      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+                      "apiVersion": "2021-02-01",
+                      "name": "[format('{0}/{1}/{2}', variables('storageNameCleaned'), 'default', parameters('fileSystemNames')[copyIndex()])]",
+                      "properties": {
+                        "publicAccess": "None",
+                        "metadata": {}
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageNameCleaned'), 'default')]"
+                      ]
+                    },
+                    {
+                      "type": "Microsoft.Storage/storageAccounts/managementPolicies",
+                      "apiVersion": "2021-02-01",
+                      "name": "[format('{0}/{1}', variables('storageNameCleaned'), 'default')]",
+                      "properties": {
+                        "policy": {
+                          "rules": [
+                            {
+                              "enabled": true,
+                              "name": "toCool",
+                              "type": "Lifecycle",
+                              "definition": {
+                                "actions": {
+                                  "baseBlob": {
+                                    "tierToCool": {
+                                      "daysAfterModificationGreaterThan": 90
+                                    }
+                                  }
+                                },
+                                "filters": {
+                                  "blobTypes": [
+                                    "blockBlob"
+                                  ],
+                                  "prefixMatch": []
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]"
+                      ]
+                    }
+                  ],
+                  "outputs": {
+                    "storageId": {
+                      "type": "string",
+                      "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]"
+                    },
+                    "storageFileSystemIds": {
+                      "type": "array",
+                      "copy": {
+                        "count": "[length(parameters('fileSystemNames'))]",
+                        "input": {
+                          "storageFileSystemId": "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', variables('storageNameCleaned'), 'default', parameters('fileSystemNames')[copyIndex()])]"
+                        }
+                      }
+                    },
+                    "accessRule": {
+                      "type": "string",
+                      "value": "[format('{0}/providers/Microsoft.MachineLearningServices/workspaces/*', resourceGroup().id)]"
+                    }
+                  }
+                }
+              }
             }
           ],
           "outputs": {
@@ -1887,6 +2117,14 @@
             "enCurLakeFileSystemIds": {
               "type": "array",
               "value": "[reference(resourceId('Microsoft.Resources/deployments', variables('EnCurLakeName'))).outputs.storageFileSystemIds.value]"
+            },
+            "workLakeId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Resources/deployments', variables('workStorageAccountName'))).outputs.storageId.value]"
+            },
+            "workLakeFileSystemIds": {
+              "type": "array",
+              "value": "[reference(resourceId('Microsoft.Resources/deployments', variables('workStorageAccountName'))).outputs.storageFileSystemIds.value]"
             }
           }
         }
@@ -2468,6 +2706,9 @@
           "isNeedSynapse": {
             "value": "[parameters('isNeedSynapse')]"
           },
+          "workStorageAccountId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'datalake')).outputs.workLakeId.value]"
+          },
           "WhiteListsStartEndIPs": {
             "value": "[parameters('WhiteListsStartEndIPs')]"
           },
@@ -2518,7 +2759,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.6.18.56646",
-              "templateHash": "11904278540762966030"
+              "templateHash": "9700030040049763350"
             }
           },
           "parameters": {
@@ -2580,6 +2821,9 @@
             "isNeedSynapse": {
               "type": "bool"
             },
+            "workStorageAccountId": {
+              "type": "string"
+            },
             "sqlAdministratorUsername": {
               "type": "string"
             },
@@ -2638,7 +2882,6 @@
             "containerRegistryName": "[format('{0}-mlcr-{1}', parameters('prefix'), parameters('env'))]",
             "amlStorageName": "[format('{0}-mlst-{1}', parameters('prefix'), parameters('env'))]",
             "synapseName": "[format('{0}-syn-{1}', parameters('prefix'), parameters('env'))]",
-            "synapseStorageName": "[format('{0}-ws-{1}', parameters('prefix'), parameters('env'))]",
             "synshirName": "shir001",
             "synshirPublicIPAddressName": "[format('{0}-sir-ip-{1}', parameters('prefix'), parameters('env'))]",
             "synshirDnsLabal": "[replace(format('{0}sir{1}', parameters('prefix'), parameters('env')), '-', '')]",
@@ -2815,7 +3058,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.6.18.56646",
-                      "templateHash": "772074675175456630"
+                      "templateHash": "11128731053089267569"
                     }
                   },
                   "parameters": {
@@ -2920,7 +3163,7 @@
                       "condition": "[equals(parameters('isNeedSHIRforDataFactory'), true())]",
                       "type": "Microsoft.Resources/deployments",
                       "apiVersion": "2020-10-01",
-                      "name": "runtime",
+                      "name": "runtimeForDataFactory",
                       "properties": {
                         "expressionEvaluationOptions": {
                           "scope": "inner"
@@ -3742,18 +3985,8 @@
                   "tags": {
                     "value": "[variables('tagJoin')]"
                   },
-                  "synapseDefaultStorageAccountName": {
-                    "value": "[variables('synapseStorageName')]"
-                  },
-                  "allowSubnetIds": {
-                    "value": [
-                      "[parameters('mlcomputeSubnetId')]",
-                      "[parameters('customPublicSubnetId')]",
-                      "[parameters('runtimeSubnetId')]"
-                    ]
-                  },
-                  "WhiteListsCIDRRules": {
-                    "value": "[parameters('WhiteListsCIDRRules')]"
+                  "synapseDefaultStorageAccountId": {
+                    "value": "[parameters('workStorageAccountId')]"
                   },
                   "synapseName": {
                     "value": "[variables('synapseName')]"
@@ -3829,7 +4062,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.6.18.56646",
-                      "templateHash": "7102333352704816652"
+                      "templateHash": "14692181599837272810"
                     }
                   },
                   "parameters": {
@@ -3839,14 +4072,8 @@
                     "tags": {
                       "type": "object"
                     },
-                    "synapseDefaultStorageAccountName": {
+                    "synapseDefaultStorageAccountId": {
                       "type": "string"
-                    },
-                    "WhiteListsCIDRRules": {
-                      "type": "array"
-                    },
-                    "allowSubnetIds": {
-                      "type": "array"
                     },
                     "synapseName": {
                       "type": "string"
@@ -3924,22 +4151,7 @@
                     }
                   },
                   "variables": {
-                    "copy": [
-                      {
-                        "name": "allowSubnetIdsRules",
-                        "count": "[length(parameters('allowSubnetIds'))]",
-                        "input": {
-                          "id": "[parameters('allowSubnetIds')[copyIndex('allowSubnetIdsRules')]]",
-                          "action": "Allow"
-                        }
-                      }
-                    ],
-                    "ResourceAccessrules": [
-                      {
-                        "tenantId": "[subscription().tenantId]",
-                        "resourceId": "[format('/subscriptions/{0}/resourceGroups/*/providers/Microsoft.Synapse/workspaces/*', subscription().subscriptionId)]"
-                      }
-                    ],
+                    "synapseDefaultStorageAccountName": "[last(split(parameters('synapseDefaultStorageAccountId'), '/'))]",
                     "managedVirtualNetworkSettings": "[if(equals(parameters('isDLPEnable'), true()), createObject('allowedAadTenantIdsForLinking', createArray(), 'linkedAccessCheckOnTargetResource', true(), 'preventDataExfiltration', true()), createObject())]",
                     "sqlPoolName": "dwh001",
                     "sqlPoolNameCleaned": "[replace(variables('sqlPoolName'), '-', '_')]",
@@ -3958,18 +4170,15 @@
                       "tags": "[parameters('tags')]",
                       "properties": {
                         "defaultDataLakeStorage": {
-                          "filesystem": "[last(split(reference(resourceId('Microsoft.Resources/deployments', parameters('synapseDefaultStorageAccountName'))).outputs.storageFileSystemIds.value[0].storageFileSystemId, '/'))]",
-                          "accountUrl": "[format('https://{0}.dfs.{1}', parameters('synapseDefaultStorageAccountName'), environment().suffixes.storage)]"
+                          "filesystem": "synapse001",
+                          "accountUrl": "[format('https://{0}.dfs.{1}', variables('synapseDefaultStorageAccountName'), environment().suffixes.storage)]"
                         },
                         "sqlAdministratorLogin": "[parameters('administratorUsername')]",
                         "sqlAdministratorLoginPassword": "[parameters('administratorPassword')]",
                         "publicNetworkAccess": "Enabled",
                         "managedVirtualNetwork": "default",
                         "managedVirtualNetworkSettings": "[variables('managedVirtualNetworkSettings')]"
-                      },
-                      "dependsOn": [
-                        "[resourceId('Microsoft.Resources/deployments', parameters('synapseDefaultStorageAccountName'))]"
-                      ]
+                      }
                     },
                     {
                       "condition": "[parameters('AllowAzure')]",
@@ -4057,224 +4266,6 @@
                       "dependsOn": [
                         "[resourceId('Microsoft.Synapse/workspaces', parameters('synapseName'))]"
                       ]
-                    },
-                    {
-                      "type": "Microsoft.Resources/deployments",
-                      "apiVersion": "2020-10-01",
-                      "name": "[parameters('synapseDefaultStorageAccountName')]",
-                      "properties": {
-                        "expressionEvaluationOptions": {
-                          "scope": "inner"
-                        },
-                        "mode": "Incremental",
-                        "parameters": {
-                          "tags": {
-                            "value": "[parameters('tags')]"
-                          },
-                          "fileSystemNames": {
-                            "value": [
-                              "[format('work-{0}', parameters('synapseName'))]"
-                            ]
-                          },
-                          "isHnsEnabled": {
-                            "value": true
-                          },
-                          "location": {
-                            "value": "[parameters('location')]"
-                          },
-                          "storageIPWhiteLists": {
-                            "value": "[parameters('WhiteListsCIDRRules')]"
-                          },
-                          "virtualNetworkRules": {
-                            "value": "[variables('allowSubnetIdsRules')]"
-                          },
-                          "storageName": {
-                            "value": "[parameters('synapseDefaultStorageAccountName')]"
-                          },
-                          "storageSKU": {
-                            "value": "Standard_ZRS"
-                          },
-                          "resourceAccessRules": {
-                            "value": "[variables('ResourceAccessrules')]"
-                          }
-                        },
-                        "template": {
-                          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                          "contentVersion": "1.0.0.0",
-                          "metadata": {
-                            "_generator": {
-                              "name": "bicep",
-                              "version": "0.6.18.56646",
-                              "templateHash": "8766346466627536355"
-                            }
-                          },
-                          "parameters": {
-                            "storageName": {
-                              "type": "string"
-                            },
-                            "fileSystemNames": {
-                              "type": "array"
-                            },
-                            "storageIPWhiteLists": {
-                              "type": "array"
-                            },
-                            "location": {
-                              "type": "string"
-                            },
-                            "isHnsEnabled": {
-                              "type": "bool"
-                            },
-                            "storageSKU": {
-                              "type": "string"
-                            },
-                            "virtualNetworkRules": {
-                              "type": "array"
-                            },
-                            "tags": {
-                              "type": "object"
-                            },
-                            "defaultAccessTier": {
-                              "type": "string",
-                              "defaultValue": "Hot"
-                            },
-                            "resourceAccessRules": {
-                              "type": "array"
-                            }
-                          },
-                          "variables": {
-                            "storageNameCleaned": "[replace(parameters('storageName'), '-', '')]"
-                          },
-                          "resources": [
-                            {
-                              "type": "Microsoft.Storage/storageAccounts",
-                              "apiVersion": "2021-02-01",
-                              "name": "[variables('storageNameCleaned')]",
-                              "location": "[parameters('location')]",
-                              "tags": "[parameters('tags')]",
-                              "identity": {
-                                "type": "SystemAssigned"
-                              },
-                              "sku": {
-                                "name": "[parameters('storageSKU')]"
-                              },
-                              "kind": "StorageV2",
-                              "properties": {
-                                "accessTier": "[parameters('defaultAccessTier')]",
-                                "allowBlobPublicAccess": false,
-                                "allowSharedKeyAccess": true,
-                                "encryption": {
-                                  "keySource": "Microsoft.Storage",
-                                  "services": {
-                                    "blob": {
-                                      "enabled": true,
-                                      "keyType": "Account"
-                                    },
-                                    "file": {
-                                      "enabled": true,
-                                      "keyType": "Account"
-                                    },
-                                    "queue": {
-                                      "enabled": true,
-                                      "keyType": "Service"
-                                    },
-                                    "table": {
-                                      "enabled": true,
-                                      "keyType": "Service"
-                                    }
-                                  }
-                                },
-                                "isHnsEnabled": "[parameters('isHnsEnabled')]",
-                                "networkAcls": {
-                                  "bypass": "AzureServices",
-                                  "defaultAction": "Deny",
-                                  "ipRules": "[parameters('storageIPWhiteLists')]",
-                                  "virtualNetworkRules": "[parameters('virtualNetworkRules')]",
-                                  "resourceAccessRules": "[parameters('resourceAccessRules')]"
-                                },
-                                "supportsHttpsTrafficOnly": true
-                              }
-                            },
-                            {
-                              "type": "Microsoft.Storage/storageAccounts/blobServices",
-                              "apiVersion": "2021-02-01",
-                              "name": "[format('{0}/{1}', variables('storageNameCleaned'), 'default')]",
-                              "properties": {},
-                              "dependsOn": [
-                                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]"
-                              ]
-                            },
-                            {
-                              "copy": {
-                                "name": "storageFileSystems",
-                                "count": "[length(parameters('fileSystemNames'))]"
-                              },
-                              "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
-                              "apiVersion": "2021-02-01",
-                              "name": "[format('{0}/{1}/{2}', variables('storageNameCleaned'), 'default', parameters('fileSystemNames')[copyIndex()])]",
-                              "properties": {
-                                "publicAccess": "None",
-                                "metadata": {}
-                              },
-                              "dependsOn": [
-                                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageNameCleaned'), 'default')]"
-                              ]
-                            },
-                            {
-                              "type": "Microsoft.Storage/storageAccounts/managementPolicies",
-                              "apiVersion": "2021-02-01",
-                              "name": "[format('{0}/{1}', variables('storageNameCleaned'), 'default')]",
-                              "properties": {
-                                "policy": {
-                                  "rules": [
-                                    {
-                                      "enabled": true,
-                                      "name": "toCool",
-                                      "type": "Lifecycle",
-                                      "definition": {
-                                        "actions": {
-                                          "baseBlob": {
-                                            "tierToCool": {
-                                              "daysAfterModificationGreaterThan": 90
-                                            }
-                                          }
-                                        },
-                                        "filters": {
-                                          "blobTypes": [
-                                            "blockBlob"
-                                          ],
-                                          "prefixMatch": []
-                                        }
-                                      }
-                                    }
-                                  ]
-                                }
-                              },
-                              "dependsOn": [
-                                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]"
-                              ]
-                            }
-                          ],
-                          "outputs": {
-                            "storageId": {
-                              "type": "string",
-                              "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]"
-                            },
-                            "storageFileSystemIds": {
-                              "type": "array",
-                              "copy": {
-                                "count": "[length(parameters('fileSystemNames'))]",
-                                "input": {
-                                  "storageFileSystemId": "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', variables('storageNameCleaned'), 'default', parameters('fileSystemNames')[copyIndex()])]"
-                                }
-                              }
-                            },
-                            "accessRule": {
-                              "type": "string",
-                              "value": "[format('{0}/providers/Microsoft.MachineLearningServices/workspaces/*', resourceGroup().id)]"
-                            }
-                          }
-                        }
-                      }
                     },
                     {
                       "condition": "[equals(parameters('isNeedSqlPool'), true())]",
@@ -4379,7 +4370,7 @@
                       "condition": "[equals(parameters('isNeedSHIRforSynepse'), true())]",
                       "type": "Microsoft.Resources/deployments",
                       "apiVersion": "2020-10-01",
-                      "name": "runtime",
+                      "name": "runtimeForSynapse",
                       "properties": {
                         "expressionEvaluationOptions": {
                           "scope": "inner"
@@ -4687,17 +4678,9 @@
                       "type": "string",
                       "value": "[resourceId('Microsoft.Synapse/workspaces/bigDataPools', parameters('synapseName'), variables('sparkPoolNameCleaned'))]"
                     },
-                    "synapseStorageId": {
-                      "type": "string",
-                      "value": "[reference(resourceId('Microsoft.Resources/deployments', parameters('synapseDefaultStorageAccountName'))).outputs.storageId.value]"
-                    },
                     "synapsePrincipalId": {
                       "type": "string",
                       "value": "[reference(resourceId('Microsoft.Synapse/workspaces', parameters('synapseName')), '2021-06-01', 'full').identity.principalId]"
-                    },
-                    "synapseFilesystemId": {
-                      "type": "string",
-                      "value": "[reference(resourceId('Microsoft.Resources/deployments', parameters('synapseDefaultStorageAccountName'))).outputs.storageFileSystemIds.value[0].storageFileSystemId]"
                     }
                   }
                 }
@@ -5242,14 +5225,6 @@
               "type": "string",
               "value": "[if(equals(parameters('isNeedSynapse'), true()), reference(resourceId('Microsoft.Resources/deployments', 'synapse'), '2020-10-01').outputs.synapsePrincipalId.value, '')]"
             },
-            "synapseStorageId": {
-              "type": "string",
-              "value": "[if(equals(parameters('isNeedSynapse'), true()), reference(resourceId('Microsoft.Resources/deployments', 'synapse'), '2020-10-01').outputs.synapseStorageId.value, '')]"
-            },
-            "synapseFilesystemId": {
-              "type": "string",
-              "value": "[if(equals(parameters('isNeedSynapse'), true()), reference(resourceId('Microsoft.Resources/deployments', 'synapse'), '2020-10-01').outputs.synapseFilesystemId.value, '')]"
-            },
             "sparkPoolId": {
               "type": "string",
               "value": "[if(equals(parameters('isNeedSynapse'), true()), reference(resourceId('Microsoft.Resources/deployments', 'synapse'), '2020-10-01').outputs.sparkPoolId.value, '')]"
@@ -5287,6 +5262,7 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'appKeyvault')]",
+        "[resourceId('Microsoft.Resources/deployments', 'datalake')]",
         "[resourceId('Microsoft.Resources/deployments', 'network')]"
       ]
     },
@@ -5383,6 +5359,9 @@
           "enrichCurateStorageId": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'datalake')).outputs.enCurLakeId.value]"
           },
+          "workspaceLakeId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'datalake')).outputs.workLakeId.value]"
+          },
           "landingRawStorageId": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'datalake')).outputs.landingRawLakeId.value]"
           },
@@ -5400,7 +5379,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.6.18.56646",
-              "templateHash": "5847927620451419510"
+              "templateHash": "7089144574279000979"
             }
           },
           "parameters": {
@@ -5417,6 +5396,9 @@
               "type": "string"
             },
             "machinelearningPrincipalId": {
+              "type": "string"
+            },
+            "workspaceLakeId": {
               "type": "string"
             }
           },
@@ -5478,6 +5460,42 @@
               "apiVersion": "2020-04-01-preview",
               "scope": "[format('Microsoft.Storage/storageAccounts/{0}', last(split(parameters('enrichCurateStorageId'), '/')))]",
               "name": "[guid(parameters('machinelearningPrincipalId'), parameters('enrichCurateStorageId'), variables('storageBlobDataContributorRoleId'), 'machinelearningToenrichCurateLake')]",
+              "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('storageBlobDataContributorRoleId'))]",
+                "principalId": "[parameters('machinelearningPrincipalId')]",
+                "principalType": "ServicePrincipal"
+              }
+            },
+            {
+              "condition": "[not(empty(parameters('synapsePrincipalId')))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-04-01-preview",
+              "scope": "[format('Microsoft.Storage/storageAccounts/{0}', last(split(parameters('workspaceLakeId'), '/')))]",
+              "name": "[guid(parameters('synapsePrincipalId'), parameters('workspaceLakeId'), variables('storageBlobDataContributorRoleId'), 'synapseToworkspaceLake')]",
+              "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('storageBlobDataContributorRoleId'))]",
+                "principalId": "[parameters('synapsePrincipalId')]",
+                "principalType": "ServicePrincipal"
+              }
+            },
+            {
+              "condition": "[not(empty(parameters('datafacoryPrincipalId')))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-04-01-preview",
+              "scope": "[format('Microsoft.Storage/storageAccounts/{0}', last(split(parameters('workspaceLakeId'), '/')))]",
+              "name": "[guid(parameters('datafacoryPrincipalId'), parameters('workspaceLakeId'), variables('storageBlobDataContributorRoleId'), 'datafactoryToWorkLake')]",
+              "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('storageBlobDataContributorRoleId'))]",
+                "principalId": "[parameters('datafacoryPrincipalId')]",
+                "principalType": "ServicePrincipal"
+              }
+            },
+            {
+              "condition": "[not(empty(parameters('machinelearningPrincipalId')))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-04-01-preview",
+              "scope": "[format('Microsoft.Storage/storageAccounts/{0}', last(split(parameters('workspaceLakeId'), '/')))]",
+              "name": "[guid(parameters('machinelearningPrincipalId'), parameters('workspaceLakeId'), variables('storageBlobDataContributorRoleId'), 'machinelearningToWorkLake')]",
               "properties": {
                 "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('storageBlobDataContributorRoleId'))]",
                 "principalId": "[parameters('machinelearningPrincipalId')]",
@@ -5684,6 +5702,9 @@
           },
           "synapsePrincipalId": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'dataApps')).outputs.synapsePrincipalId.value]"
+          },
+          "mlStorageId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'dataApps')).outputs.mlstorageId.value]"
           }
         },
         "template": {
@@ -5693,11 +5714,14 @@
             "_generator": {
               "name": "bicep",
               "version": "0.6.18.56646",
-              "templateHash": "15305665107175313726"
+              "templateHash": "5779530028773075928"
             }
           },
           "parameters": {
             "machinelearningId": {
+              "type": "string"
+            },
+            "mlStorageId": {
               "type": "string"
             },
             "datafacoryPrincipalId": {
@@ -5708,7 +5732,8 @@
             }
           },
           "variables": {
-            "contributorRoleId": "b24988ac-6180-42a0-ab88-20f7382dd24c"
+            "contributorRoleId": "b24988ac-6180-42a0-ab88-20f7382dd24c",
+            "storageBlobDataContributorRoleId": "ba92f5b4-2d11-453d-a403-e96b0029c9fe"
           },
           "resources": [
             {
@@ -5731,6 +5756,30 @@
               "name": "[guid(parameters('synapsePrincipalId'), parameters('machinelearningId'), variables('contributorRoleId'), 'synapseToDatabricksContributor')]",
               "properties": {
                 "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('contributorRoleId'))]",
+                "principalId": "[parameters('synapsePrincipalId')]",
+                "principalType": "ServicePrincipal"
+              }
+            },
+            {
+              "condition": "[not(empty(parameters('datafacoryPrincipalId')))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-04-01-preview",
+              "scope": "[format('Microsoft.Storage/storageAccounts/{0}', last(split(parameters('mlStorageId'), '/')))]",
+              "name": "[guid(parameters('datafacoryPrincipalId'), parameters('mlStorageId'), variables('storageBlobDataContributorRoleId'), 'datafactoryTomlstorageBlobContributor')]",
+              "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('storageBlobDataContributorRoleId'))]",
+                "principalId": "[parameters('datafacoryPrincipalId')]",
+                "principalType": "ServicePrincipal"
+              }
+            },
+            {
+              "condition": "[not(empty(parameters('synapsePrincipalId')))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-04-01-preview",
+              "scope": "[format('Microsoft.Storage/storageAccounts/{0}', last(split(parameters('mlStorageId'), '/')))]",
+              "name": "[guid(parameters('synapsePrincipalId'), parameters('mlStorageId'), variables('storageBlobDataContributorRoleId'), 'synapseTomlstorageBlobContributor')]",
+              "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('storageBlobDataContributorRoleId'))]",
                 "principalId": "[parameters('synapsePrincipalId')]",
                 "principalType": "ServicePrincipal"
               }
@@ -5817,71 +5866,6 @@
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'dataApps')]",
         "[resourceId('Microsoft.Resources/deployments', 'uploads')]"
-      ]
-    },
-    {
-      "condition": "[equals(parameters('isNeedSynapse'), true())]",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
-      "name": "workspaceLakeRBAC",
-      "properties": {
-        "expressionEvaluationOptions": {
-          "scope": "inner"
-        },
-        "mode": "Incremental",
-        "parameters": {
-          "synapsePrincipalId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'dataApps')).outputs.synapsePrincipalId.value]"
-          },
-          "workspaceLakeFilesystemId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'dataApps')).outputs.synapseFilesystemId.value]"
-          },
-          "workspaceLakeId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'dataApps')).outputs.synapseStorageId.value]"
-          }
-        },
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "metadata": {
-            "_generator": {
-              "name": "bicep",
-              "version": "0.6.18.56646",
-              "templateHash": "2650309431194168267"
-            }
-          },
-          "parameters": {
-            "synapsePrincipalId": {
-              "type": "string"
-            },
-            "workspaceLakeId": {
-              "type": "string"
-            },
-            "workspaceLakeFilesystemId": {
-              "type": "string"
-            }
-          },
-          "variables": {
-            "storageBlobDataContributorRoleId": "ba92f5b4-2d11-453d-a403-e96b0029c9fe"
-          },
-          "resources": [
-            {
-              "condition": "[not(empty(parameters('synapsePrincipalId')))]",
-              "type": "Microsoft.Authorization/roleAssignments",
-              "apiVersion": "2020-04-01-preview",
-              "scope": "[format('Microsoft.Storage/storageAccounts/{0}/blobServices/{1}', last(split(parameters('workspaceLakeId'), '/')), 'default')]",
-              "name": "[guid(parameters('synapsePrincipalId'), parameters('workspaceLakeFilesystemId'), variables('storageBlobDataContributorRoleId'), 'synapseToworkspaceLake')]",
-              "properties": {
-                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('storageBlobDataContributorRoleId'))]",
-                "principalId": "[parameters('synapsePrincipalId')]",
-                "principalType": "ServicePrincipal"
-              }
-            }
-          ]
-        }
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'dataApps')]"
       ]
     },
     {
@@ -5996,8 +5980,8 @@
           "synapseId": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'dataApps')).outputs.synapseId.value]"
           },
-          "synapseStorageId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'dataApps')).outputs.synapseStorageId.value]"
+          "workStorageId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'datalake')).outputs.workLakeId.value]"
           },
           "uploadStorageId": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'uploads')).outputs.uploadStorageId.value]"
@@ -6013,7 +5997,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.6.18.56646",
-              "templateHash": "14610046787482578136"
+              "templateHash": "18116463989973900942"
             }
           },
           "parameters": {
@@ -6038,7 +6022,7 @@
             "datafactoryId": {
               "type": "string"
             },
-            "synapseStorageId": {
+            "workStorageId": {
               "type": "string"
             },
             "synapseId": {
@@ -6159,7 +6143,31 @@
               }
             },
             {
-              "condition": "[not(empty(parameters('synapseStorageId')))]",
+              "type": "Microsoft.Storage/storageAccounts/blobServices",
+              "apiVersion": "2021-09-01",
+              "name": "[format('{0}/{1}', last(split(parameters('workStorageId'), '/')), 'default')]"
+            },
+            {
+              "type": "Microsoft.Insights/diagnosticSettings",
+              "apiVersion": "2021-05-01-preview",
+              "scope": "[format('Microsoft.Storage/storageAccounts/{0}/blobServices/{1}', last(split(parameters('workStorageId'), '/')), 'default')]",
+              "name": "allLogs",
+              "properties": {
+                "storageAccountId": "[parameters('loggingStorageId')]",
+                "workspaceId": "[parameters('loganalyticsId')]",
+                "logs": [
+                  {
+                    "categoryGroup": "allLogs",
+                    "enabled": true
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', last(split(parameters('workStorageId'), '/')), 'default')]"
+              ]
+            },
+            {
+              "condition": "[not(empty(parameters('synapseId')))]",
               "type": "Microsoft.Resources/deployments",
               "apiVersion": "2020-10-01",
               "name": "loggingSetting_synapse",
@@ -6169,23 +6177,20 @@
                 },
                 "mode": "Incremental",
                 "parameters": {
-                  "synapseStorageId": {
-                    "value": "[parameters('synapseStorageId')]"
-                  },
-                  "vulnerbilityContainerPath": {
-                    "value": "[parameters('vulnerbilityContainerPath')]"
-                  },
                   "loganalyticsId": {
                     "value": "[parameters('loganalyticsId')]"
-                  },
-                  "sparkpoolId": {
-                    "value": "[parameters('sparkpoolId')]"
                   },
                   "loggingStorageId": {
                     "value": "[parameters('loggingStorageId')]"
                   },
+                  "sparkpoolId": {
+                    "value": "[parameters('sparkpoolId')]"
+                  },
                   "synapseId": {
                     "value": "[parameters('synapseId')]"
+                  },
+                  "vulnerbilityContainerPath": {
+                    "value": "[parameters('vulnerbilityContainerPath')]"
                   }
                 },
                 "template": {
@@ -6195,7 +6200,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.6.18.56646",
-                      "templateHash": "11280944852238820256"
+                      "templateHash": "316207062018111528"
                     }
                   },
                   "parameters": {
@@ -6203,9 +6208,6 @@
                       "type": "string"
                     },
                     "loganalyticsId": {
-                      "type": "string"
-                    },
-                    "synapseStorageId": {
                       "type": "string"
                     },
                     "synapseId": {
@@ -6222,32 +6224,6 @@
                     "loggingStorageName": "[last(split(parameters('loggingStorageId'), '/'))]"
                   },
                   "resources": [
-                    {
-                      "condition": "[not(empty(parameters('synapseStorageId')))]",
-                      "type": "Microsoft.Storage/storageAccounts/blobServices",
-                      "apiVersion": "2021-09-01",
-                      "name": "[format('{0}/{1}', last(split(parameters('synapseStorageId'), '/')), 'default')]"
-                    },
-                    {
-                      "condition": "[not(empty(parameters('synapseStorageId')))]",
-                      "type": "Microsoft.Insights/diagnosticSettings",
-                      "apiVersion": "2021-05-01-preview",
-                      "scope": "[format('Microsoft.Storage/storageAccounts/{0}/blobServices/{1}', last(split(parameters('synapseStorageId'), '/')), 'default')]",
-                      "name": "allLogs",
-                      "properties": {
-                        "storageAccountId": "[parameters('loggingStorageId')]",
-                        "workspaceId": "[parameters('loganalyticsId')]",
-                        "logs": [
-                          {
-                            "categoryGroup": "allLogs",
-                            "enabled": true
-                          }
-                        ]
-                      },
-                      "dependsOn": [
-                        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', last(split(parameters('synapseStorageId'), '/')), 'default')]"
-                      ]
-                    },
                     {
                       "condition": "[not(empty(parameters('synapseId')))]",
                       "type": "Microsoft.Insights/diagnosticSettings",
@@ -6715,7 +6691,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.6.18.56646",
-              "templateHash": "13652704937868122096"
+              "templateHash": "13301638610203911760"
             }
           },
           "parameters": {
@@ -6763,11 +6739,11 @@
             "keyvaultName": "[last(split(parameters('keyvaultId'), '/'))]",
             "keyvaultNameCleaned": "[replace(replace(variables('keyvaultName'), format('-{0}', parameters('env')), '_env'), '-', '_')]",
             "uploadStraogeName": "[last(split(parameters('uploadStraogeId'), '/'))]",
-            "uploadStraogeNameCleaned": "[replace(replace(variables('uploadStraogeName'), format('-{0}', parameters('env')), '_env'), '-', '_')]",
+            "uploadStraogeNameCleaned": "[replace(replace(variables('uploadStraogeName'), format('upst{0}', parameters('env')), 'upstenv'), '-', '_')]",
             "rawLakeName": "[last(split(parameters('rawLakeId'), '/'))]",
-            "rawLakeCleaned": "[replace(replace(variables('rawLakeName'), format('-{0}', parameters('env')), '_env'), '-', '_')]",
+            "rawLakeCleaned": "[replace(replace(variables('rawLakeName'), format('raw{0}', parameters('env')), 'rawenv'), '-', '_')]",
             "enCurLakeName": "[last(split(parameters('enCurLakeId'), '/'))]",
-            "enCurLakeNameCleaned": "[replace(replace(variables('enCurLakeName'), format('-{0}', parameters('env')), '_env'), '-', '_')]"
+            "enCurLakeNameCleaned": "[replace(replace(variables('enCurLakeName'), format('encur{0}', parameters('env')), 'encurenv'), '-', '_')]"
           },
           "resources": [
             {
@@ -6928,7 +6904,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.6.18.56646",
-                      "templateHash": "6221661544620486738"
+                      "templateHash": "18343577987838123397"
                     }
                   },
                   "parameters": {
@@ -6948,7 +6924,7 @@
                   "variables": {
                     "mlStorageName": "[last(split(parameters('mlStorageId'), '/'))]",
                     "mlWorkspaceName": "[last(split(parameters('machinelearningId'), '/'))]",
-                    "mlStorageNameCleaned": "[replace(replace(variables('mlStorageName'), format('-{0}', parameters('env')), '_env'), '-', '_')]",
+                    "mlStorageNameCleaned": "[replace(replace(variables('mlStorageName'), format('mlst{0}', parameters('env')), 'mlstenv'), '-', '_')]",
                     "mlWorkspaceNameCleaned": "[replace(replace(variables('mlWorkspaceName'), format('-{0}', parameters('env')), '_env'), '-', '_')]"
                   },
                   "resources": [
@@ -7068,6 +7044,86 @@
         "[resourceId('Microsoft.Resources/deployments', 'dataApps')]",
         "[resourceId('Microsoft.Resources/deployments', 'datalake')]",
         "[resourceId('Microsoft.Resources/deployments', 'uploads')]"
+      ]
+    },
+    {
+      "condition": "[equals(parameters('isNeedMachineLearning'), true())]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "machinelearningSetup",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "machineLearningId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'dataApps')).outputs.machinelearningId.value]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          },
+          "datalakeFileSystemIds": {
+            "value": "[concat(reference(resourceId('Microsoft.Resources/deployments', 'datalake')).outputs.enCurLakeFileSystemIds.value, reference(resourceId('Microsoft.Resources/deployments', 'datalake')).outputs.workLakeFileSystemIds.value)]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.6.18.56646",
+              "templateHash": "7909687146873392401"
+            }
+          },
+          "parameters": {
+            "tags": {
+              "type": "object"
+            },
+            "datalakeFileSystemIds": {
+              "type": "array",
+              "defaultValue": []
+            },
+            "machineLearningId": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "condition": "[equals(length(split(parameters('datalakeFileSystemIds')[copyIndex()].storageFileSystemId, '/')), 13)]",
+              "copy": {
+                "name": "machineLearningDatastores",
+                "count": "[length(parameters('datalakeFileSystemIds'))]"
+              },
+              "type": "Microsoft.MachineLearningServices/workspaces/datastores",
+              "apiVersion": "2021-03-01-preview",
+              "name": "[format('{0}/{1}', last(split(parameters('machineLearningId'), '/')), format('{0}{1}', if(lessOrEquals(length(parameters('datalakeFileSystemIds')), 0), format('undefined{0}', copyIndex()), split(replace(parameters('datalakeFileSystemIds')[copyIndex()].storageFileSystemId, '-', '_'), '/')[8]), if(lessOrEquals(length(parameters('datalakeFileSystemIds')), 0), format('undefined{0}', copyIndex()), last(split(replace(parameters('datalakeFileSystemIds')[copyIndex()].storageFileSystemId, '-', '_'), '/')))))]",
+              "properties": {
+                "tags": "[parameters('tags')]",
+                "contents": {
+                  "contentsType": "AzureDataLakeGen2",
+                  "accountName": "[split(parameters('datalakeFileSystemIds')[copyIndex()].storageFileSystemId, '/')[8]]",
+                  "containerName": "[last(split(parameters('datalakeFileSystemIds')[copyIndex()].storageFileSystemId, '/'))]",
+                  "credentials": {
+                    "credentialsType": "None",
+                    "secrets": {
+                      "secretsType": "None"
+                    }
+                  },
+                  "endpoint": "[environment().suffixes.storage]",
+                  "protocol": "https"
+                },
+                "description": "[format('Data Lake Gen2 - {0}', split(parameters('datalakeFileSystemIds')[copyIndex()].storageFileSystemId, '/')[8])]",
+                "isDefault": false
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'dataApps')]",
+        "[resourceId('Microsoft.Resources/deployments', 'datalake')]"
       ]
     }
   ]
