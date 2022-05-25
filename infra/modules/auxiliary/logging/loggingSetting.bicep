@@ -19,6 +19,8 @@ param mlAcrId string
 param sqlServerId string
 param sqldatabaseId string
 
+// param cognitiveservicesId string
+
 param vulnerbilityContainerPath string
 
 
@@ -165,3 +167,12 @@ module  loggingSetting_databricks 'loggingSetting_databricks.bicep'  = if (!empt
     databricksId:databricksId
   }
 }
+
+// module loggingSetting_cognitiveservices 'loggingSetting_cognitiveservices.bicep' = if (!empty(cognitiveservicesId )){
+//   name:'loggingSetting_cognitiveservices'
+//   params:{
+//     loganalyticsId: loganalyticsId
+//     loggingStorageId: loggingStorageId
+//     cognitiveservicesId: cognitiveservicesId
+//   }
+// }

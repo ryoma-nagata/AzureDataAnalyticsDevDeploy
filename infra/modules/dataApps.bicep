@@ -55,6 +55,7 @@ param AllowAzure bool
 param isDLPEnable bool
 // sqlpool
 param isNeedSqlPool bool
+param collation string 
 param sqlPoolBackupType string
 param sqlPooldwu string
 // SHIR
@@ -76,6 +77,10 @@ var powerbiGWPublicIPAddressName = '${prefix}-pbi-ip-${env}'
 var powerbiGWDnsLabal = replace('${prefix}pbi${env}','-','')
 var powerbiGWNicName = '${prefix}-pbi-nic-${env}'
 var powerbiGWVMName = replace('${prefix}pbi${env}','-','')
+
+// cognitiveservices
+// param isNeedCognitiveServices bool
+// var CognitiveServicesName =  '${prefix}-cog-${env}'
 
 module databricks 'services/databricks.bicep' = if (isNeedDatabricks == true) {
   name: databricksName
@@ -149,6 +154,7 @@ module synapse 'services/synapse.bicep' = if (isNeedSynapse == true) {
     sqlPooldwu:sqlPooldwu
     synapseSqlAdminGroupName:AdminGroupName
     synapseSqlAdminGroupObjectID:AdminGroupObjectID
+    collation:collation
     // SHIR
     isNeedSHIRforSynepse : isNeedSHIRforSynepse
     selfhostedIRName:synshirName
@@ -179,6 +185,9 @@ module sql 'services/sqlserverless.bicep' =  if (isNeedSQL == true){
     sqlIPWhiteLists: WhiteListsStartEndIPs
     sqlServerName: sqlServerName
     tags: tagJoin
+    collation:collation
+    sqlAdminGroupName:AdminGroupName
+    sqlAdminGroupObjectID:AdminGroupObjectID
   }
 }
 
@@ -203,7 +212,17 @@ module pbigw 'services/runtime.bicep' =  if (isNeedVMforOnPremiseDataGateway == 
   }
 }
 
+// module cognitiveServices 'services/cognitiveServices.bicep' = if (isNeedCognitiveServices == true){
+//   name:'cognitiveServices'
+//   params:{
+//     location: location
+//     tags: tagJoin
+//     cognitiveAccountName: CognitiveServicesName
+//   }
+// }
+
 output databricksId string = (isNeedDatabricks == true) ? databricks.outputs.databricksWorkspaceId : ''
+output databricksWorkspaceUrl string =  (isNeedDatabricks == true) ? databricks.outputs.databricksWorkspaceUrl: ''
 output datafactoryId string = (isNeedDataFactory == true) ? datafactory.outputs.datafactoryId : ''
 output datafactoryPrincipalId string = (isNeedDataFactory == true) ? datafactory.outputs.datafactoryPrincipalId : ''
 output synapseId string = (isNeedSynapse == true) ? synapse.outputs.synapseId : ''
@@ -214,8 +233,8 @@ output sparkPoolId string =  (isNeedSynapse == true) ?  synapse.outputs.sparkPoo
 output machinelearningId string =  (isNeedMachineLearning == true) ? machinelearning.outputs.machinelearningWorkspaceId : ''
 output containerRegistryId string = (isNeedMachineLearning == true) ? machinelearning.outputs.containerRegistryId : ''
 output mlstorageId string =(isNeedMachineLearning == true) ? machinelearning.outputs.mlstorageId : ''
+output machinelearningPrincipalId string = (isNeedSQL == true)? machinelearning.outputs.machinelearningPrincipalId : ''
 output sqlServerId string = (isNeedSQL == true)? sql.outputs.sqlServerId : ''
 output sqlServerPrincipalId string =  (isNeedSQL == true)? sql.outputs.sqlServerPrincipalId : ''
 output sqlDatabaseId string = (isNeedSQL == true)? sql.outputs.sqlDatabaseId : ''
-
-output machinelearningPrincipalId string = (isNeedSQL == true)? machinelearning.outputs.machinelearningPrincipalId : ''
+// output CognitiveServicesAccountId string = (isNeedCognitiveServices == true)?  cognitiveServices.outputs.CognitiveServicesAccountId: ''

@@ -144,6 +144,8 @@ param sqlAdministratorPassword string=''
   false
 ])
 param isNeedSqlPool bool= false
+@description('データベースの照合順序。既定：日本語環境での推奨値　SQL DBと共通')
+param collation string = 'Japanese_XJIS_100_CI_AS'
 @allowed([
   'LRS'
   'GRS'
@@ -178,12 +180,19 @@ param isNeedSHIRforSynepse bool = true
 param isNeedSQL bool = true
 
 // powerbiGW
-@description('true の場合をOnpremise Data Gateway用VMをデプロイします。デプロイ後のインストールが必要です')
+@description('true の場合Onpremise Data Gateway用VMをデプロイします。デプロイ後のインストールが必要です')
 @allowed([
   true
   false
 ])
 param isNeedVMforOnPremiseDataGateway bool =true
+
+// @description('true の場合CognitiveService マルチアカウントをデプロイします。')
+// @allowed([
+//   true
+//   false
+// ])
+// param isNeedCognitiveServices bool
 
 // general var 
 var vmsku = 'Standard_A4_v2'
@@ -302,6 +311,7 @@ module dataApps 'modules/dataApps.bicep' = {
     isDLPEnable:isDLPEnable
     // sqlpool
     isNeedSqlPool:isNeedSqlPool
+    collation:collation
     AdminGroupObjectID:AdminGroupObjectID
     AdminGroupName:AdminGroupName
     sqlPoolBackupType:sqlPoolBackupType
@@ -311,7 +321,8 @@ module dataApps 'modules/dataApps.bicep' = {
     isNeedVMforOnPremiseDataGateway:isNeedVMforOnPremiseDataGateway
     //sql
     isNeedSQL:isNeedSQL
-
+    // cognitive
+    // isNeedCognitiveServices:isNeedCognitiveServices
   }
 }
 
@@ -379,7 +390,12 @@ module workspaceLakeRBAC 'modules/auxiliary/rbac/workspaceLakeRoleAssignment.bic
   }
 }
 
-
+module resouceGroupRBAC 'modules/auxiliary/rbac/resourceGroupRoleAssignment.bicep' = {
+  name: 'resouceGroupRBAC'
+  params: {
+    securityGroupObjectId: AdminGroupObjectID
+  }
+}
 
 module loggingsetting 'modules/auxiliary/logging/loggingSetting.bicep' = {
   name: 'loggingsetting'
@@ -404,5 +420,34 @@ module loggingsetting 'modules/auxiliary/logging/loggingSetting.bicep' = {
     synapseStorageId: dataApps.outputs.synapseStorageId
     uploadStorageId: uploads.outputs.uploadStorageId
     vulnerbilityContainerPath:logging.outputs.vulnerabilityscansConteinrNamePath
+    // cognitiveservicesId:dataApps.outputs.CognitiveServicesAccountId
+  }
+}
+
+
+// module keyvaultSecrets 'modules/auxiliary/keyvault/secretDeploy.bicep' = {
+//   name: 'keyvaultSecrets'
+//   params: {
+//     cognitiveServicesAccountId:dataApps.outputs.CognitiveServicesAccountId 
+//     keyvaultId: appKeyvault.outputs.keyvaultId
+//   }
+// }
+
+module datafactoryLinkServices 'modules/auxiliary/datafactory/datafactoryLinkServices.bicep' = if(isNeedDataFactory == true){
+  name: 'datafactoryLinkServices'
+  params: {
+    databricksId: dataApps.outputs.databricksId
+    databricksWorkspaceUrl: dataApps.outputs.databricksWorkspaceUrl
+    datafactoryId: dataApps.outputs.datafactoryId 
+    enCurLakeId: datalake.outputs.enCurLakeId
+    env: env 
+    keyvaultId:appKeyvault.outputs.keyvaultId 
+    keyvaultUri: appKeyvault.outputs.keyvaultUri
+    machinelearningId: dataApps.outputs.machinelearningId
+    mlStorageId: dataApps.outputs.mlstorageId
+    rawLakeId: datalake.outputs.landingRawLakeId
+    sqlDatabaseId: dataApps.outputs.sqlDatabaseId
+    sqlserverId: dataApps.outputs.sqlServerId
+    uploadStraogeId: uploads.outputs.uploadStorageId
   }
 }

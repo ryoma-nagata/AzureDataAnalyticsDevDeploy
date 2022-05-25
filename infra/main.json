@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.6.18.56646",
-      "templateHash": "13215667281231234547"
+      "templateHash": "11035042159956151096"
     }
   },
   "parameters": {
@@ -253,6 +253,13 @@
         "description": "true の場合専用SQLPoolをデプロイします。"
       }
     },
+    "collation": {
+      "type": "string",
+      "defaultValue": "Japanese_XJIS_100_CI_AS",
+      "metadata": {
+        "description": "データベースの照合順序。既定：日本語環境での推奨値　SQL DBと共通"
+      }
+    },
     "sqlPoolBackupType": {
       "type": "string",
       "defaultValue": "GRS",
@@ -308,7 +315,7 @@
         false
       ],
       "metadata": {
-        "description": "true の場合をOnpremise Data Gateway用VMをデプロイします。デプロイ後のインストールが必要です"
+        "description": "true の場合Onpremise Data Gateway用VMをデプロイします。デプロイ後のインストールが必要です"
       }
     }
   },
@@ -2479,6 +2486,9 @@
           "isNeedSqlPool": {
             "value": "[parameters('isNeedSqlPool')]"
           },
+          "collation": {
+            "value": "[parameters('collation')]"
+          },
           "AdminGroupObjectID": {
             "value": "[parameters('AdminGroupObjectID')]"
           },
@@ -2508,7 +2518,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.6.18.56646",
-              "templateHash": "9481331518322284499"
+              "templateHash": "11904278540762966030"
             }
           },
           "parameters": {
@@ -2594,6 +2604,9 @@
             },
             "isNeedSqlPool": {
               "type": "bool"
+            },
+            "collation": {
+              "type": "string"
             },
             "sqlPoolBackupType": {
               "type": "string"
@@ -3775,6 +3788,9 @@
                   "synapseSqlAdminGroupObjectID": {
                     "value": "[parameters('AdminGroupObjectID')]"
                   },
+                  "collation": {
+                    "value": "[parameters('collation')]"
+                  },
                   "isNeedSHIRforSynepse": {
                     "value": "[parameters('isNeedSHIRforSynepse')]"
                   },
@@ -3813,7 +3829,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.6.18.56646",
-                      "templateHash": "3174388959657701331"
+                      "templateHash": "7102333352704816652"
                     }
                   },
                   "parameters": {
@@ -3871,6 +3887,10 @@
                       "type": "string",
                       "defaultValue": "dw100"
                     },
+                    "collation": {
+                      "type": "string",
+                      "defaultValue": "Japanese_XJIS_100_CI_AS"
+                    },
                     "isNeedSHIRforSynepse": {
                       "type": "bool"
                     },
@@ -3923,7 +3943,6 @@
                     "managedVirtualNetworkSettings": "[if(equals(parameters('isDLPEnable'), true()), createObject('allowedAadTenantIdsForLinking', createArray(), 'linkedAccessCheckOnTargetResource', true(), 'preventDataExfiltration', true()), createObject())]",
                     "sqlPoolName": "dwh001",
                     "sqlPoolNameCleaned": "[replace(variables('sqlPoolName'), '-', '_')]",
-                    "collation": "Japanese_XJIS_100_CI_AS",
                     "sparkPoolName": "sparkpool001",
                     "sparkPoolNameCleaned": "[replace(variables('sparkPoolName'), '-', '_')]"
                   },
@@ -4278,7 +4297,7 @@
                             "value": "[parameters('sqlPooldwu')]"
                           },
                           "collation": {
-                            "value": "[variables('collation')]"
+                            "value": "[parameters('collation')]"
                           },
                           "sqlPoolBackupType": {
                             "value": "[parameters('sqlPoolBackupType')]"
@@ -4722,6 +4741,15 @@
                   },
                   "tags": {
                     "value": "[variables('tagJoin')]"
+                  },
+                  "collation": {
+                    "value": "[parameters('collation')]"
+                  },
+                  "sqlAdminGroupName": {
+                    "value": "[parameters('AdminGroupName')]"
+                  },
+                  "sqlAdminGroupObjectID": {
+                    "value": "[parameters('AdminGroupObjectID')]"
                   }
                 },
                 "template": {
@@ -4731,7 +4759,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.6.18.56646",
-                      "templateHash": "9307880529690160079"
+                      "templateHash": "11554924275313854034"
                     }
                   },
                   "parameters": {
@@ -4755,6 +4783,14 @@
                     },
                     "sqlAdministratorLoginPassword": {
                       "type": "secureString"
+                    },
+                    "sqlAdminGroupName": {
+                      "type": "string",
+                      "defaultValue": ""
+                    },
+                    "sqlAdminGroupObjectID": {
+                      "type": "string",
+                      "defaultValue": ""
                     },
                     "collation": {
                       "type": "string",
@@ -4814,6 +4850,21 @@
                       "properties": {
                         "state": "Enabled",
                         "emailAccountAdmins": false
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
+                      ]
+                    },
+                    {
+                      "condition": "[not(empty(parameters('sqlAdminGroupObjectID')))]",
+                      "type": "Microsoft.Sql/servers/administrators",
+                      "apiVersion": "2021-11-01-preview",
+                      "name": "[format('{0}/{1}', parameters('sqlServerName'), 'ActiveDirectory')]",
+                      "properties": {
+                        "administratorType": "ActiveDirectory",
+                        "login": "[parameters('sqlAdminGroupName')]",
+                        "sid": "[parameters('sqlAdminGroupObjectID')]",
+                        "tenantId": "[subscription().tenantId]"
                       },
                       "dependsOn": [
                         "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
@@ -5171,6 +5222,10 @@
               "type": "string",
               "value": "[if(equals(parameters('isNeedDatabricks'), true()), reference(resourceId('Microsoft.Resources/deployments', variables('databricksName')), '2020-10-01').outputs.databricksWorkspaceId.value, '')]"
             },
+            "databricksWorkspaceUrl": {
+              "type": "string",
+              "value": "[if(equals(parameters('isNeedDatabricks'), true()), reference(resourceId('Microsoft.Resources/deployments', variables('databricksName')), '2020-10-01').outputs.databricksWorkspaceUrl.value, '')]"
+            },
             "datafactoryId": {
               "type": "string",
               "value": "[if(equals(parameters('isNeedDataFactory'), true()), reference(resourceId('Microsoft.Resources/deployments', variables('datafactoryName')), '2020-10-01').outputs.datafactoryId.value, '')]"
@@ -5211,6 +5266,10 @@
               "type": "string",
               "value": "[if(equals(parameters('isNeedMachineLearning'), true()), reference(resourceId('Microsoft.Resources/deployments', 'machinelearning'), '2020-10-01').outputs.mlstorageId.value, '')]"
             },
+            "machinelearningPrincipalId": {
+              "type": "string",
+              "value": "[if(equals(parameters('isNeedSQL'), true()), reference(resourceId('Microsoft.Resources/deployments', 'machinelearning'), '2020-10-01').outputs.machinelearningPrincipalId.value, '')]"
+            },
             "sqlServerId": {
               "type": "string",
               "value": "[if(equals(parameters('isNeedSQL'), true()), reference(resourceId('Microsoft.Resources/deployments', 'sql'), '2020-10-01').outputs.sqlServerId.value, '')]"
@@ -5222,10 +5281,6 @@
             "sqlDatabaseId": {
               "type": "string",
               "value": "[if(equals(parameters('isNeedSQL'), true()), reference(resourceId('Microsoft.Resources/deployments', 'sql'), '2020-10-01').outputs.sqlDatabaseId.value, '')]"
-            },
-            "machinelearningPrincipalId": {
-              "type": "string",
-              "value": "[if(equals(parameters('isNeedSQL'), true()), reference(resourceId('Microsoft.Resources/deployments', 'machinelearning'), '2020-10-01').outputs.machinelearningPrincipalId.value, '')]"
             }
           }
         }
@@ -5828,6 +5883,66 @@
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'dataApps')]"
       ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "resouceGroupRBAC",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "securityGroupObjectId": {
+            "value": "[parameters('AdminGroupObjectID')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.6.18.56646",
+              "templateHash": "17427262368464250942"
+            }
+          },
+          "parameters": {
+            "securityGroupObjectId": {
+              "type": "string"
+            }
+          },
+          "variables": {
+            "storageBlobDataOwnerRoleId": "b7e6dc6d-f1e8-4753-8033-0f276bb0955b",
+            "keyvaultadmin": "00482a5a-887f-4fb3-b363-3b7fe8e74483"
+          },
+          "resources": [
+            {
+              "condition": "[not(empty(parameters('securityGroupObjectId')))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-04-01-preview",
+              "name": "[guid(parameters('securityGroupObjectId'), resourceGroup().id, variables('storageBlobDataOwnerRoleId'), 'sgToStorageBlobDataContributor')]",
+              "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('storageBlobDataOwnerRoleId'))]",
+                "principalId": "[parameters('securityGroupObjectId')]",
+                "principalType": "Group"
+              }
+            },
+            {
+              "condition": "[not(empty(parameters('securityGroupObjectId')))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-04-01-preview",
+              "name": "[guid(parameters('securityGroupObjectId'), resourceGroup().id, variables('keyvaultadmin'), 'sgToKeyvaultAdmin')]",
+              "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('keyvaultadmin'))]",
+                "principalId": "[parameters('securityGroupObjectId')]",
+                "principalType": "Group"
+              }
+            }
+          ]
+        }
+      }
     },
     {
       "type": "Microsoft.Resources/deployments",
@@ -6539,6 +6654,419 @@
         "[resourceId('Microsoft.Resources/deployments', 'datalake')]",
         "[resourceId('Microsoft.Resources/deployments', 'logging')]",
         "[resourceId('Microsoft.Resources/deployments', 'loggingRBAC')]",
+        "[resourceId('Microsoft.Resources/deployments', 'uploads')]"
+      ]
+    },
+    {
+      "condition": "[equals(parameters('isNeedDataFactory'), true())]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "datafactoryLinkServices",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "databricksId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'dataApps')).outputs.databricksId.value]"
+          },
+          "databricksWorkspaceUrl": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'dataApps')).outputs.databricksWorkspaceUrl.value]"
+          },
+          "datafactoryId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'dataApps')).outputs.datafactoryId.value]"
+          },
+          "enCurLakeId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'datalake')).outputs.enCurLakeId.value]"
+          },
+          "env": {
+            "value": "[parameters('env')]"
+          },
+          "keyvaultId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'appKeyvault')).outputs.keyvaultId.value]"
+          },
+          "keyvaultUri": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'appKeyvault')).outputs.keyvaultUri.value]"
+          },
+          "machinelearningId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'dataApps')).outputs.machinelearningId.value]"
+          },
+          "mlStorageId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'dataApps')).outputs.mlstorageId.value]"
+          },
+          "rawLakeId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'datalake')).outputs.landingRawLakeId.value]"
+          },
+          "sqlDatabaseId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'dataApps')).outputs.sqlDatabaseId.value]"
+          },
+          "sqlserverId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'dataApps')).outputs.sqlServerId.value]"
+          },
+          "uploadStraogeId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'uploads')).outputs.uploadStorageId.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.6.18.56646",
+              "templateHash": "13652704937868122096"
+            }
+          },
+          "parameters": {
+            "datafactoryId": {
+              "type": "string"
+            },
+            "keyvaultId": {
+              "type": "string"
+            },
+            "keyvaultUri": {
+              "type": "string"
+            },
+            "env": {
+              "type": "string"
+            },
+            "uploadStraogeId": {
+              "type": "string"
+            },
+            "rawLakeId": {
+              "type": "string"
+            },
+            "enCurLakeId": {
+              "type": "string"
+            },
+            "databricksId": {
+              "type": "string"
+            },
+            "databricksWorkspaceUrl": {
+              "type": "string"
+            },
+            "machinelearningId": {
+              "type": "string"
+            },
+            "mlStorageId": {
+              "type": "string"
+            },
+            "sqlDatabaseId": {
+              "type": "string"
+            },
+            "sqlserverId": {
+              "type": "string"
+            }
+          },
+          "variables": {
+            "keyvaultName": "[last(split(parameters('keyvaultId'), '/'))]",
+            "keyvaultNameCleaned": "[replace(replace(variables('keyvaultName'), format('-{0}', parameters('env')), '_env'), '-', '_')]",
+            "uploadStraogeName": "[last(split(parameters('uploadStraogeId'), '/'))]",
+            "uploadStraogeNameCleaned": "[replace(replace(variables('uploadStraogeName'), format('-{0}', parameters('env')), '_env'), '-', '_')]",
+            "rawLakeName": "[last(split(parameters('rawLakeId'), '/'))]",
+            "rawLakeCleaned": "[replace(replace(variables('rawLakeName'), format('-{0}', parameters('env')), '_env'), '-', '_')]",
+            "enCurLakeName": "[last(split(parameters('enCurLakeId'), '/'))]",
+            "enCurLakeNameCleaned": "[replace(replace(variables('enCurLakeName'), format('-{0}', parameters('env')), '_env'), '-', '_')]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.DataFactory/factories/linkedservices",
+              "apiVersion": "2018-06-01",
+              "name": "[format('{0}/{1}', last(split(parameters('datafactoryId'), '/')), variables('keyvaultNameCleaned'))]",
+              "properties": {
+                "annotations": [],
+                "type": "AzureKeyVault",
+                "typeProperties": {
+                  "baseUrl": "[parameters('keyvaultUri')]"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.DataFactory/factories/linkedservices",
+              "apiVersion": "2018-06-01",
+              "name": "[format('{0}/{1}', last(split(parameters('datafactoryId'), '/')), variables('uploadStraogeNameCleaned'))]",
+              "properties": {
+                "annotations": [],
+                "type": "AzureBlobStorage",
+                "typeProperties": {
+                  "accountKind": "StorageV2",
+                  "serviceEndpoint": "[format('https://{0}.blob.{1}', variables('uploadStraogeName'), environment().suffixes.storage)]"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.DataFactory/factories/linkedservices",
+              "apiVersion": "2018-06-01",
+              "name": "[format('{0}/{1}', last(split(parameters('datafactoryId'), '/')), variables('rawLakeCleaned'))]",
+              "properties": {
+                "annotations": [],
+                "type": "AzureBlobFS",
+                "typeProperties": {
+                  "url": "[format('https://{0}.dfs.{1}', variables('rawLakeName'), environment().suffixes.storage)]"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.DataFactory/factories/linkedservices",
+              "apiVersion": "2018-06-01",
+              "name": "[format('{0}/{1}', last(split(parameters('datafactoryId'), '/')), variables('enCurLakeNameCleaned'))]",
+              "properties": {
+                "annotations": [],
+                "type": "AzureBlobFS",
+                "typeProperties": {
+                  "url": "[format('https://{0}.dfs.{1}', variables('enCurLakeName'), environment().suffixes.storage)]"
+                }
+              }
+            },
+            {
+              "condition": "[not(empty(parameters('databricksId')))]",
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2020-10-01",
+              "name": "datafactoryLinkServices_databricks",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "databricksId": {
+                    "value": "[parameters('databricksId')]"
+                  },
+                  "databricksWorkspaceUrl": {
+                    "value": "[parameters('databricksWorkspaceUrl')]"
+                  },
+                  "datafactoryId": {
+                    "value": "[parameters('datafactoryId')]"
+                  },
+                  "env": {
+                    "value": "[parameters('env')]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.6.18.56646",
+                      "templateHash": "683159958747669377"
+                    }
+                  },
+                  "parameters": {
+                    "datafactoryId": {
+                      "type": "string"
+                    },
+                    "databricksId": {
+                      "type": "string"
+                    },
+                    "databricksWorkspaceUrl": {
+                      "type": "string"
+                    },
+                    "env": {
+                      "type": "string"
+                    }
+                  },
+                  "variables": {
+                    "databricksName": "[last(split(parameters('databricksId'), '/'))]",
+                    "databricksNameCleaned": "[replace(replace(variables('databricksName'), format('-{0}', parameters('env')), '_env'), '-', '_')]"
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.DataFactory/factories/linkedservices",
+                      "apiVersion": "2018-06-01",
+                      "name": "[format('{0}/{1}', last(split(parameters('datafactoryId'), '/')), variables('databricksNameCleaned'))]",
+                      "properties": {
+                        "annotations": [],
+                        "type": "AzureDatabricks",
+                        "typeProperties": {
+                          "domain": "[format('https://{0}', parameters('databricksWorkspaceUrl'))]",
+                          "authentication": "MSI",
+                          "workspaceResourceId": "[parameters('databricksId')]",
+                          "newClusterNodeType": "Standard_E8_v3",
+                          "newClusterNumOfWorker": "2:4",
+                          "newClusterSparkEnvVars": {
+                            "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+                          },
+                          "newClusterVersion": "10.4.x-photon-scala2.12",
+                          "clusterOption": "Autoscaling"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "condition": "[not(empty(parameters('machinelearningId')))]",
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2020-10-01",
+              "name": "datafactoryLinkServices_machinelearning",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "datafactoryId": {
+                    "value": "[parameters('datafactoryId')]"
+                  },
+                  "env": {
+                    "value": "[parameters('env')]"
+                  },
+                  "machinelearningId": {
+                    "value": "[parameters('machinelearningId')]"
+                  },
+                  "mlStorageId": {
+                    "value": "[parameters('mlStorageId')]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.6.18.56646",
+                      "templateHash": "6221661544620486738"
+                    }
+                  },
+                  "parameters": {
+                    "datafactoryId": {
+                      "type": "string"
+                    },
+                    "machinelearningId": {
+                      "type": "string"
+                    },
+                    "mlStorageId": {
+                      "type": "string"
+                    },
+                    "env": {
+                      "type": "string"
+                    }
+                  },
+                  "variables": {
+                    "mlStorageName": "[last(split(parameters('mlStorageId'), '/'))]",
+                    "mlWorkspaceName": "[last(split(parameters('machinelearningId'), '/'))]",
+                    "mlStorageNameCleaned": "[replace(replace(variables('mlStorageName'), format('-{0}', parameters('env')), '_env'), '-', '_')]",
+                    "mlWorkspaceNameCleaned": "[replace(replace(variables('mlWorkspaceName'), format('-{0}', parameters('env')), '_env'), '-', '_')]"
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.DataFactory/factories/linkedservices",
+                      "apiVersion": "2018-06-01",
+                      "name": "[format('{0}/{1}', last(split(parameters('datafactoryId'), '/')), variables('mlStorageNameCleaned'))]",
+                      "properties": {
+                        "annotations": [],
+                        "type": "AzureBlobStorage",
+                        "typeProperties": {
+                          "accountKind": "StorageV2",
+                          "serviceEndpoint": "[format('https://{0}.blob.{1}', variables('mlStorageName'), environment().suffixes.storage)]"
+                        }
+                      }
+                    },
+                    {
+                      "type": "Microsoft.DataFactory/factories/linkedservices",
+                      "apiVersion": "2018-06-01",
+                      "name": "[format('{0}/{1}', last(split(parameters('datafactoryId'), '/')), variables('mlWorkspaceNameCleaned'))]",
+                      "properties": {
+                        "annotations": [],
+                        "type": "AzureMLService",
+                        "typeProperties": {
+                          "subscriptionId": "[subscription().subscriptionId]",
+                          "resourceGroupName": "[resourceGroup().name]",
+                          "mlWorkspaceName": "[variables('mlWorkspaceName')]",
+                          "tenant": "[subscription().tenantId]",
+                          "authentication": "MSI"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "condition": "[not(empty(parameters('sqlserverId')))]",
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2020-10-01",
+              "name": "datafactoryLinkServices_sql",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "datafactoryId": {
+                    "value": "[parameters('datafactoryId')]"
+                  },
+                  "env": {
+                    "value": "[parameters('env')]"
+                  },
+                  "sqlDatabaseId": {
+                    "value": "[parameters('sqlDatabaseId')]"
+                  },
+                  "sqlserverId": {
+                    "value": "[parameters('sqlserverId')]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.6.18.56646",
+                      "templateHash": "3433985052739882524"
+                    }
+                  },
+                  "parameters": {
+                    "datafactoryId": {
+                      "type": "string"
+                    },
+                    "sqlserverId": {
+                      "type": "string"
+                    },
+                    "sqlDatabaseId": {
+                      "type": "string"
+                    },
+                    "env": {
+                      "type": "string"
+                    }
+                  },
+                  "variables": {
+                    "sqlServerName": "[last(split(parameters('sqlserverId'), '/'))]",
+                    "sqlDatabaseName": "[last(split(parameters('sqlDatabaseId'), '/'))]",
+                    "connectionString": "[format('Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source={0}{1};Initial Catalog={2}', variables('sqlServerName'), environment().suffixes.sqlServerHostname, variables('sqlDatabaseName'))]",
+                    "sqlDatabaseNameCleaned": "[replace(replace(variables('sqlDatabaseName'), format('-{0}', parameters('env')), '_env'), '-', '_')]"
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.DataFactory/factories/linkedservices",
+                      "apiVersion": "2018-06-01",
+                      "name": "[format('{0}/{1}', last(split(parameters('datafactoryId'), '/')), variables('sqlDatabaseNameCleaned'))]",
+                      "properties": {
+                        "annotations": [],
+                        "type": "AzureSqlDatabase",
+                        "typeProperties": {
+                          "connectionString": "[variables('connectionString')]"
+                        },
+                        "connectVia": {
+                          "referenceName": "AutoResolveIntegrationRuntime",
+                          "type": "IntegrationRuntimeReference"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'appKeyvault')]",
+        "[resourceId('Microsoft.Resources/deployments', 'dataApps')]",
+        "[resourceId('Microsoft.Resources/deployments', 'datalake')]",
         "[resourceId('Microsoft.Resources/deployments', 'uploads')]"
       ]
     }

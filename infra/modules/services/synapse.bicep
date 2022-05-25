@@ -40,7 +40,7 @@ var sqlPoolNameCleaned = replace(sqlPoolName,'-','_')
 
 param sqlPoolBackupType string
 param sqlPooldwu string ='dw100'
-var collation  = 'Japanese_XJIS_100_CI_AS'
+param collation string  = 'Japanese_XJIS_100_CI_AS'
 
 //sparkpool
 var sparkPoolName = 'sparkpool001'

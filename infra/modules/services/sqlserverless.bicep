@@ -12,6 +12,9 @@ param sqlAdministratorLogin string
 @secure()
 param sqlAdministratorLoginPassword string
 
+param sqlAdminGroupName string = ''
+param sqlAdminGroupObjectID string = ''
+
 @description('日本語環境での推奨値です')
 param collation string = 'Japanese_XJIS_100_CI_AS'
 param tags object
@@ -65,7 +68,16 @@ resource sqlServerSecurityAlertPolicies 'Microsoft.Sql/servers/securityAlertPoli
   }
 }
 
-
+resource adAdministrator 'Microsoft.Sql/servers/administrators@2021-11-01-preview' = if (!empty(sqlAdminGroupObjectID)){
+  parent: sqlServer
+  name: 'ActiveDirectory'
+  properties: {
+    administratorType: 'ActiveDirectory'
+    login: sqlAdminGroupName
+    sid: sqlAdminGroupObjectID
+    tenantId: subscription().tenantId
+  }
+}
 
 resource sqlServerVirtualNetworkRules 'Microsoft.Sql/servers/virtualNetworkRules@2015-05-01-preview' = [for id in allowSubnetIds: {
   parent: sqlServer
