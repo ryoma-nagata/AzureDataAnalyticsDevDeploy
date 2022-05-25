@@ -351,3 +351,4 @@ MigrationBackup/
 .devcontainer/devcontainer.env
 variable.json
 
+infra/params*.json
