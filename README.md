@@ -2,7 +2,7 @@
 
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fryoma-nagata%2FAzureDataAnalyticsDevDeploy%2Fmaster%2Finfra%2Fmain.json)
 
-![](.image/2022-05-25-17-53-24.png)
+![](.image/2022-05-26-09-54-18.png)
 
 ※Cognitiveは開発中
 
