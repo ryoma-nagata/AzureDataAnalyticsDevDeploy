@@ -817,10 +817,7 @@
               "properties": {
                 "securityRules": [
                   {
-                    "name": "Microsoft.
-                    
-                    
-                    cks-workspaces_UseOnly_databricks-worker-to-worker-inbound",
+                    "name": "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-worker-inbound",
                     "properties": {
                       "description": "Required for worker nodes communication within a cluster.",
                       "protocol": "*",
